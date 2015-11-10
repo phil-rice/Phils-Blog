@@ -12,21 +12,43 @@ Each of the suggested options on the internet train site is an OTT.
 My observation is that all other things being equal, the memory consumed by a data set strongly determines how long it takes to manipulate it. By compressing the data
 we get very real savings in performance and latency (if we care about latency: this project doesn't). In addition it reduces the amount of garbage to be collected, and
 on a multi threaded application very often Garbage Collection can take 'most of the CPU time'. In modern CPU architectures 'memory is the new hard drive'. The same algorithm 
-performed where a unit of data takes two bytes will go a lot quicker than when a unit of data takes forty bytes.
+performed where a unit of data takes eight bytes will go a lot quicker than when a unit of data takes five hundred bytes.
 
 ## Quick stats
 
 |Type|Expected number|
 |:--- |---:|
 |Locations that can be the source or destination| 2500|
-|Location to Location mileages that need to be calculated| 6,250,000|
-|Number of lookups that will be done| 500,000,000|
+|Number of OTTs that need to calculated and stored in memory|25,000,000|
 
 Having coded up an Algorithm that worked using traditional Scala data structures (linked lists, immutable maps), it took about a second to do all the OTTs for a single location/location pair.
 Given there are over six million location/location pairs, that is going to take a long time to calculate! 
 
+
+The initial data structure for an OTT looked like this:
+
+{% highlight scala %}
+case class OttRoute(miles: Int, journey: List[Either[DjsRecord, Walk]])
+case class Walk(time: TimeInMinutes, destination: NationalLocationCode)
+case class DjsRecord(departure: ServiceSegment, arrival: ServiceSegment, line: String)
+trait ServiceSegment{/*this represents a train actually at a station. For example 
+                     'York on Service#<id> departing at 09:00' */
+{% endhighlight %}
+NationalLocationCode was (in this case) actually a long. Let's do a quick memory calculation for an OTT with five steps. The DjsRecords are actually shared among many OttRoutes, so we won't 
+worry about their memory usage. The Walks aren't but we'll ignore them for now. That leaves us with an object OttRecord, a list and an int. If the List is a standard Scala :: List then it 
+has a :: object for every item in. The Either is another object
+
+|Object|Count|Bytes Each|Total Bytes|
+|OttRoute|1|40|40 bytes|
+|List |5|40 |200 bytes|
+|Either|5|48|240 bytes|
+
+This gives a total of around 440 bytes. Perhaps 500 with a walk. Our goal is to reduce this to roughly 8 bytes, a sixty fold reduction, and the usage of AnyVals and TypeClasses are a big part of how we are going to do this. 
+My assertion (which was confirmed in practice) is that this will  translate into a dramatic code speed up. With the 25 million OTTs (who are revisited several times by the alogithm) 500 bytes translates to 
+around 12 gigabytes of memory, where as the 8 bytes becomes only 170 MB. All this memory has to go through the CPU several times during the OTT calculations.
+ 
 #Type Classes to the rescue
-The working algorithm manipulates an interrogates OTTs. Among it's other needs the algorithm needs to ask for the start and end time of the OTT, and the 'from and to' locations (called NationalLocationCode)
+The working algorithm manipulates an interrogates OTTs. Among its other needs the algorithm needs to ask for the start and end time of the OTT, and the 'from and to' locations (called NationalLocationCode)
 {% highlight scala %}
 trait ArrivalDeparture[T] {
   def startTime(t: T): TimeInHalfMinutes
@@ -84,31 +106,10 @@ class NationalLocationCode(val nlc: Int) extends AnyVal {
 }
 {% endhighlight %}
 
-#Putting the AnyVals to work
-Our original time was around a second a from/to pair. The initial data structure for an OTT looked like this:
-
-{% highlight scala %}
-case class OttRoute(miles: Int, journey: List[Either[DjsRecord, Walk]])
-case class Walk(time: TimeInMinutes, destination: NationalLocationCode)
-case class DjsRecord(departure: ServiceSegment, arrival: ServiceSegment, line: String)
-trait ServiceSegment{/*this represents a train actually at a station. For example 
-                     'York on Service#<id> departing at 09:00' */
-{% endhighlight %}
-NationalLocationCode was (in this case) actually a long. Let's do a quick memory calculation for an OTT with five steps. The DjsRecords are actually shared among many OttRoutes, so we won't 
-worry about their memory usage. The Walks aren't but we'll ignore them for now. That leaves us with an object OttRecord, a list and an int. If the List is a standard Scala :: List then it 
-has a :: object for every item in. The Either is another object
-
-|Object|Count|Bytes Each|Total Bytes|
-|OttRoute|1|40|40 bytes|
-|List |5|40 |200 bytes|
-|Either|5|48|240 bytes|
-
-This gives a total of around 440 bytes. Perhaps 500 with a walk. Our goal is to reduce this to roughly 8 bytes, a sixty fold reduction, and the usage of AnyVals and TypeClasses are a big part of how we are going to do this. 
-My assertion (which was confirmed in practice) is that this will  translate into a dramatic code speed up.
 
 #Not Damaging our Algorithmic code
 The use of Type Classes means that our algorithms will treat the new data structure exactly as they did the old. There will be no change at all in that code in fact. Unfortunately
-after speeding up by compressing data, the next target was the algorithmic code, so it's readability got damaged a bit then.
+after speeding up by compressing data, the next target was the algorithmic code, so its readability got damaged a bit then.
 
 #Compression of the List
 The primary tool to help save the memory usage is the realisation that the list of Either[DjsRecord,Walk] can be shared. For example if I go from Harrogate=>York=>KingsCross that is a perfectly
@@ -142,7 +143,7 @@ are five: one for each step length. (Thus the tag field represents which array t
 
 This is just an alternative implementation of the standard :: list in Scala. The first 32 bits represent the data value in the list, and the second 32 bits point to the tail of the list. The major difference
 is that each OTT is now consuming 8 bytes instead of the original 800 or the much improved 60. This has lost the mileage storage (which would roughly double memory consumption), and experiments showed it was
-marginally quicker to recalculate it (by walking the list) than to store it.
+marginally quicker to recalculate it (by walking the list) than to store it. The 'Either' and the 'Option' are handled almost invisibly by the Tag fields.
 
 It is worth pointing out that due to the Type Classes this data representation is invisible to the algorithmic code. The old data structures can be swapped in and out without any problems.
 
@@ -159,8 +160,8 @@ class ValueAndSize(val int: Int) extends AnyVal {
   override def toString = s"($value/$size)"
 }
 {% endhighlight %}
-This is really nice. Given an Int (32 bits) wrapped in a ValueAndSize (which takes no time) we can get access to the size and value in what is idiomatically a nice way. Let's extend this idea to the actual
-Ott itself
+This is really nice. Given an Int (32 bits) wrapped in a ValueAndSize (which takes no time, and consumes no run time resources) we can get access to the size and value in what is idiomatically a nice way. 
+Let's extend this idea to the actual Ott itself
 
 {% highlight scala %}
 object LongTools {
@@ -177,11 +178,11 @@ object OttAsLong {
      new OttAsLong(LongTools.compose(to.int, from.int))
 }
 class OttAsLong(val ott: Long) extends AnyVal {
-  def toPart = new ValueAndSize(LongTools.hi(ott)) //this will be 'to'
+  def toPart = new ValueAndSize(LongTools.hi(ott)) 
   def toSize = toPart.size
   def toValue = toPart.value
 
-  def fromPart = new ValueAndSize(LongTools.lo(ott)) //this will be 'from'
+  def fromPart = new ValueAndSize(LongTools.lo(ott)) 
   def fromSize = fromPart.size
   def fromValue = fromPart.value
 
@@ -241,6 +242,9 @@ class TimeInHalfMinutesArray(val maxSize: Int) extends ShortArrayAndLength(maxSi
 }
 {% endhighlight %}
 
+Another limitation is that AnyVals don't play well with inheritance. Don't try for code reuse through inheritance with them: it doesn't work. Scala has plenty of tools to deal with this though, so
+I didn't find it a problem even with the TimeInMinutes, TimeInHalfMinutes, TimeInSeconds which could easily of been in an inheritance hierarchy.
+
 
 #Big Wins from AnyVals
 For me the biggest win was 'when things went wrong'. The AnyVal has a toString method that allows the compressed data inside it to be displayed. For TimeInHalfMinutes this
@@ -252,6 +256,6 @@ levels at having them 'protected' by being wrapped in a AnyVal was high. On at l
 down bug. Perhaps all of these as Type Classes would of been possible but the wiring code would (I think) of not been worth the win.
 
 #Summary
-AnyVals in some ways give you some of the wins of Type Classes (The flyweight pattern) without any plumbing issues. They give Type Safety in a really good way without any damage to the code base.
+AnyVals in some ways give you some of the major wins of Type Classes (The flyweight pattern) without any plumbing issues. They give Type Safety in a really good way without any damage to the code base.
  
  
