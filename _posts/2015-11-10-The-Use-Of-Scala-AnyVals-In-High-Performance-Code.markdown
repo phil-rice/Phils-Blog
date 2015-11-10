@@ -46,7 +46,7 @@ has a :: object for every item in. The Either is another object
 
 This gives a total of around 440 bytes. Perhaps 500 with a walk. Our goal is to reduce this to roughly 8 bytes, a sixty fold reduction, and the usage of AnyVals and TypeClasses are a big part of how we are going to do this. 
 My assertion (which was confirmed in practice) is that this will  translate into a dramatic code speed up. With the 25 million OTTs (who are revisited several times by the alogithm) 500 bytes translates to 
-around 12 gigabytes of memory, where as the 8 bytes becomes only 170 MB. All this memory has to go through the CPU several times during the OTT calculations.
+around 12 gigabytes of memory, where as the 8 bytes becomes only 190 MB. All this memory has to go through the CPU several times during the OTT calculations.
  
 #Type Classes to the rescue
 The working algorithm manipulates an interrogates OTTs. Among its other needs the algorithm needs to ask for the start and end time of the OTT, and the 'from and to' locations (called NationalLocationCode)
