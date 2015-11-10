@@ -19,11 +19,12 @@ performed where a unit of data takes eight bytes will go a lot quicker than when
 |Type|Expected number|
 |:--- |---:|
 |Locations that can be the source or destination| 2500|
+|Location to Location mileages that need to be calculated| 6,250,000|
 |Number of OTTs that need to calculated and stored in memory|25,000,000|
 
 Having coded up an Algorithm that worked using traditional Scala data structures (linked lists, immutable maps), it took about a second to do all the OTTs for a single location/location pair.
-Given there are over six million location/location pairs, that is going to take a long time to calculate! 
-
+Given there are over six million location/location pairs, that is going to take a long time to calculate: about a month of CPU time. From looking at the garbage collection, it was pretty clear
+that the job couldn't easily be parallelised: even though the alogirithm was single threaded, all eight cores on my machine were busy most of the time. 
 
 The initial data structure for an OTT looked like this:
 
@@ -245,7 +246,6 @@ class TimeInHalfMinutesArray(val maxSize: Int) extends ShortArrayAndLength(maxSi
 Another limitation is that AnyVals don't play well with inheritance. Don't try for code reuse through inheritance with them: it doesn't work. Scala has plenty of tools to deal with this though, so
 I didn't find it a problem even with the TimeInMinutes, TimeInHalfMinutes, TimeInSeconds which could easily of been in an inheritance hierarchy.
 
-
 #Big Wins from AnyVals
 For me the biggest win was 'when things went wrong'. The AnyVal has a toString method that allows the compressed data inside it to be displayed. For TimeInHalfMinutes this
 was very helpful as "09:30" is much easier to understand than 1140. With the OttAsLong that was absolutely invaluable. 
@@ -254,6 +254,12 @@ The type safety for all of these could nearly be met by Type Classes, but nearly
 TimeInHalfMinutes and TimeInSeconds are very similar and represented by an Int. The data in them makes a big difference, and my happiness
 levels at having them 'protected' by being wrapped in a AnyVal was high. On at least three or four occasions I had the compiler save me from what could of been a very difficult to track
 down bug. Perhaps all of these as Type Classes would of been possible but the wiring code would (I think) of not been worth the win.
+
+#Performance Results
+The combination of this and a few similar pieces of works took the time to do a 'from/to' calculation from about a second to 40 microseconds. A very significant saving: far more than the memory saving
+would imply. A large part of that is the reduced need for garbage collection.  The original Batch Job was estimated to take about a month of CPU time (for obvious reasons I never ran it) with these 
+improvements that time was reduced to about 300 seconds. Even more importantly it became possible to parallelise it (a bit: there is still a lot of garbage collection going on) making the final time 
+somewhere around 90s on an eight core machine. 
 
 #Summary
 AnyVals in some ways give you some of the major wins of Type Classes (The flyweight pattern) without any plumbing issues. They give Type Safety in a really good way without any damage to the code base.
