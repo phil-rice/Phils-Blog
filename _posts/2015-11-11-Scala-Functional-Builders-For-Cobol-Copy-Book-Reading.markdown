@@ -78,7 +78,7 @@ object StationDetails {
 {% endhighlight %}
 What we see in this code is the stationDetailsReader is using other readers to get data which it then uses to create a StationDetails. We have a lot of type safety here: the 
 locReader produces things of type Location, the colorReader things of type Colour and so on. It is the goal of this piece of work: to make something like that. I would argue 
-it isn't (quite) as readable as the annotations, but the flexibility and ability to calculate intermediate values, enrich values and map things type safe is well worth it.
+it isn't (quite) as readable as the annotations, but the flexibility and ability to calculate intermediate values, enrich values and make things type safe is well worth it.
 
 #How does Play do this?
 The answer is by heavy use of implicits and type classes. The most important trait is the FunctionalCanBuild[M[_]] trait. I have to admit to having spent a number of hours 
@@ -169,7 +169,7 @@ object CopyBookReader {
 {% endhighlight %}
 
 and... that's it. This is the one place that tells us how to wire things together. The Play framework does the rest of the heavy lifting. The code in the apply method is a 
-little odd with method names like '~', but all it actually does is say if that if you have two copy readers, then call the first before calling the second.
+little odd with class names like '~', but all it actually does is say if that if you have two copy readers, then call the first before calling the second.
 
 Let's look at how to use the CopyBookReaders. 
 {% highlight scala %}
@@ -203,7 +203,7 @@ def main(args: Array[String]): Unit = {
 {% endhighlight %}
 
 #The FunctorCopyBookReader
-This is how a Int is turned into Location, or a string into a Color. This turned out to be very straightforwards:
+This is how a Int is turned into Location, or a String into a Colour. This turned out to be very straightforwards:
 
 {% highlight scala %}
 case class FunctorCopyBookReader[X, Y](reader: CopyBookReader[X], mapFn: X => Y) 
@@ -249,7 +249,8 @@ case class NumCopyBookReader[X](length: Int) extends FixedLengthCopyBookReader[I
 {% endhighlight %}
 
 #The CopyBookStream
-This is quite horrific with the use of flags and immutable state. I would be interested if anyone has a better way of doing this sort of thing.
+This is quite horrific with the use of flags and immutable state. The coupling between it and the foldLeft function is distasteful too.  I would be interested if 
+anyone has a better way of doing this sort of thing.
 {% highlight scala %}
 class CopyBookStream(inputStream: InputStream) {
   // The problem these flags are solving is 'how do I know I am at the end of file' 
