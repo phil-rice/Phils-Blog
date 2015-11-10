@@ -40,8 +40,8 @@ case class StationDetails1(@Num(4) stnLoc: Int,
                            @C(4) maxInterchange: Int)
 {% endhighlight %}
 This has a very big win that the cobol copy book definitions are very tightly linked to the field names. I've had a number of problems with it though: the major problem
-is that just a little shuffle of position of a field can have impact on the code, and often I will want to do things like changing the types. For example I actually want something
-like this as my domain object. This is challenging to do with the annotation approach.   
+is that just a little shuffle of position of a field can have impact on the code, and often I will want to do things like changing the types. If for example I actually wanted something
+like the following as my domain object, it would be challenging to do with the annotation approach.   
 
 {% highlight scala %}
 class Location(val loc: Int) extends AnyVal
@@ -77,7 +77,7 @@ object StationDetails {
 }
 {% endhighlight %}
 What we see in this code is the stationDetailsReader is using other readers to get data which it then uses to create a StationDetails. We have a lot of type safety here: the 
-locReader produces things of type Location, the colorReader things of type Colour and so on. Iit is the goal of this piece of work: to make something like that. I would argue 
+locReader produces things of type Location, the colorReader things of type Colour and so on. It is the goal of this piece of work: to make something like that. I would argue 
 it isn't (quite) as readable as the annotations, but the flexibility and ability to calculate intermediate values, enrich values and map things type safe is well worth it.
 
 #How does Play do this?
@@ -86,7 +86,7 @@ scratching my head and working on code before I "got it".  Let's look at how we 
 together, and that's about it.
 
 #The simple CopyBookReaders
-Firstly we need a thing that we are going to build. For the moment we don't need to worry what the CopyBookStream is, other than the fact that a CopyBookReader[X] will 
+Firstly we need a thing that is going to be the basic building block we are going to build. For the moment we don't need to worry what the CopyBookStream is, other than the fact that a CopyBookReader[X] will 
 take one and produce a result of type X. In bad old mutable programming style the stream is in fact a mutable stream... But we will ignore that too! The methods on this are
 unimportant for the framework until we come to the one place where we worry about how to wire things together.
 {% highlight scala %}
@@ -270,10 +270,11 @@ class CopyBookStream(inputStream: InputStream) {
 
 #Summary
 I expected it to be very hard to do this work, and in the end (to be fair after hours of head scratching) it turned out to be the following
+
 * Define the trait CopyBookReader
 * Create the primitive CopyBookReaders 'read a string of length X', 'read a number of length x' and the CopyBookStream 
 * Define how to compose two CopyBookReaders
-* ... and that was mostly it
+* and that was mostly it
 
 The work was actually a pleasure to do, and is very easy to use. I've used it now for half a dozen types of Cobol files. Each time I do it
 I've had to add a new CopyBookReader. For example I had to add a ListCopyBookReader, where there is a value that defines how many times another field is used. It
