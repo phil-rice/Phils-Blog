@@ -7,6 +7,8 @@ date:   2015-11-10 11:06:23 +0000
 I am currently in the unhappy position of having to use a Java data structure to hold my data. The data structure  will be accessed several billion times in under two minutes, and long[] is 
 sufficiently quicker than Array[Long], that the pain is worth it. The longs in the long[] are actually going to be an AnyVal class OttAsLong.  
 
+The code for this can be found at https://github.com/phil-rice/ScalaBuildersBlog
+
 {% highlight java %}
 public class LongArrayAndLength {
 	private long[] data;
@@ -14,6 +16,9 @@ public class LongArrayAndLength {
 	public LongArrayAndLength(long[] data, int size) {
 		this.data = data;
 		this.size = size;
+	}
+	public LongArrayAndLength(int maxSize) {
+		this.data = new long[maxSize];
 	}
 	public int add(long l) {
 		data[size++] = l;
@@ -49,7 +54,7 @@ class ValueAndSize(val int: Int) extends AnyVal {
 #Iterators
 Let's start off with the easy stuff. Before we can do map and fold, let's do 'find', 'for each' and so on. For those all that is needed is
 {% highlight scala %} 
-object JavaConversions {
+object ScalaBuildersBlog {
   implicit def asIterator[X](x: LongArrayAndLength) = new Iterator[OttAsLong] {
     var index = 0
     def hasNext = index < x.getSize - 1
@@ -140,6 +145,6 @@ It was remarkably easy to give my own data structure the goodness of the Scala c
 None of which took more than a few minutes to do. 
 
 If the Java class had been a Scala class, I could of implemented these in the companion object which would of meant I didn't need to do some import magic to use this,
-however as it's a Java class I followed the Scala pattern of 'JavaConversions' and gave them their own dedicated object
+however as it's a Java class we need to make a dedicate object.
 
 
