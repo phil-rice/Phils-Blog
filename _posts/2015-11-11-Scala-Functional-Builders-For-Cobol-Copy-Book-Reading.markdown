@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Scala Functional Builder for Cobol Copy Book Readers"
-date:   2015-11-10 11:06:23 +0000
+date:   2015-11-10 08:06:23 +0000
 ---
 #Overview
 I have to read some data from a mainframe system. The files are defined using ['cobol copy books'](http://www.tutorialspoint.com/cobol/cobol_data_layout.htm) 
@@ -10,7 +10,7 @@ The performance of this reading is not very important, and I am going to have a 
 ##What's gone before
 I was surprised to find very little in the way of conversion projects, other than commercial offerings. The ones that existed didn't seem to be maintained. The ones I looked
 at and considered using where JRecord and CB2Java. A little playing with them, and I came to the conclusion that working out what was going on was going to be hard. I had actually
-written a Cobol Copy Book to Java class convertor in the past, and knew that I needed to only do a small part of the work for these specific files.
+written a Cobol Copy Book to Java class converter in the past, and knew that I needed to only do a small part of the work for these specific files.
 
 What I wanted to do was to take the opportunity to learn how to use the same style of programming that Scala Play gives us with the JSON library. Here is the raw copy book description
 for the data about a loction

@@ -16,7 +16,7 @@ toolkit that is 'what he would of written if he was starting again' to help deal
 work in cryptography, identity and providing specialised services to Credit Unions who provide basic banking provisions for the poorest in society. 
 
 His hobbies include Creative Writing, Role Playing, and Martial Arts. He teaches Tai Chi to 'Little Old Ladies' as a charitable activity under the auspices of 
-Age Concern, and travels to Hong Kong to train under Master Kit Hui, as what is known as 'an indoor student', in a style known as Liu He Ba Fa.
+Age Concern, and is an indoor student of Master Kit Hui in a style known as Liu He Ba Fa 
 
 <a href='https://www.linkedin.com/in/phil-rice-53959460' >Linked In</a>
 
