@@ -121,7 +121,8 @@ we want to be able to reuse as much of the code as possible.
 The starting code is 
 
 {% highlight scala %}
-  protected def batchDataToDatabase(tableName: String, columnNames: List[String], data: Iterator[List[Any]], chunkSize: Int = 10000)(implicit ds: DataSource) = {
+  protected def batchDataToDatabase(tableName: String, columnNames: List[String], 
+      data: Iterator[List[Any]], chunkSize: Int = 10000)(implicit ds: DataSource) = {
     val columnsWithCommas = columnNames.mkString(",")
     val questionMarks = columnNames.map(_ => "?").mkString(",")
     val sql = s"insert into $tableName ($columnsWithCommas) values ($questionMarks)"
