@@ -59,7 +59,7 @@ trait ArrivalDeparture[T] {
 {% endhighlight %}
 The nice thing about coding against the Type Classes is that I can change the implementation very easily. Another really nice thing is that this is the 'fly weight pattern' so called because
 it has a very low memory footprint. The T's don't need to be objects, they can be primitive types. Primitive types tend to consume much less memory. JVM overheads tends to be 16 to 24 bytes per object. 
-A primitive data type representing the time since midnight in half minutes can be stored in 2 bytes. This approach gives us all the type safety we want, while still using the primitive types.
+A primitive data type representing the time since midnight in half minutes can be stored in 2 bytes. Combined with AnyVals this approach gives us all the type safety we want, while still using the primitive types.
 
 #AnyVals to the rescue
 We want to talk about AnyVals though, not about Type Classes. 

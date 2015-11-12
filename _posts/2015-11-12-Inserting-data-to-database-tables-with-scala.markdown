@@ -171,9 +171,28 @@ The problem with this approach is that it runs very very slowly. The rough timin
 another four million service segments, this is going to take a while. I can live with the (say) five minutes for the service, but the over an hour for the service segments isn't very attractive.
 
 Why is it taking this amount of time? Well every line in scheduleData requires a TCP/IP round trip across a network, sql parsing, and all that for just one row of data. Databases love 'chunks at a time' 
-much more than they do 'row at a time'. In otherwords always be thinking of CATs and not RATs
+much more than they do 'row at a time'. In otherwords always be thinking of CATs and not RATs. 
 
-The code isn't much harder. Instead of taking about 270s to do the database work, it took 15 seconds. That's around 33,000 a second instead of the 2,000 a second. A big improvement 
+#Batch inserts
+Batch inserts are not much harder to work with, and allow us to chunk up our data. 
+{% highlight scala %}
+  protected def batchDataToDatabase(tableName: String, columnNames: List[String], data: Iterator[List[Any]], chunkSize: Int = 10000)(implicit ds: DataSource) = {
+    val columnsWithCommas = columnNames.mkString(",")
+    val questionMarks = columnNames.map(_ => "?").mkString(",")
+    val sql = s"insert into $tableName ($columnsWithCommas) values ($questionMarks)"
+    withPreparedStatement(sql, implicit statement => {
+      for (chunk <- data.sliding(chunkSize, chunkSize)) {
+        for { list <- chunk } {
+          for { (value, index) <- list.zipWithIndex }
+            statement.setObject(index + 1, value)
+          statement.addBatch()
+        }
+        statement.executeBatch()
+      }
+    })
+  }
+{% endhighlight %}
+Instead of taking about 270s to do the database work, it took 15 seconds. That's around 33,000 a second instead of the 2,000 a second. A big improvement 
 
 #Summary
 This approach to reading a file of data from a file, and adding the contents to a data base showed the importance of being able to do a Chunk at A Time instead of a Row At a Time. The database time for the
