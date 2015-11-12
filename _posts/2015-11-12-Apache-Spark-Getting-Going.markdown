@@ -83,7 +83,7 @@ trait SparkOps {
 }
 
 trait LocalSparks extends SparkOps {
-  def sparkUrl = "local"
+  def sparkUrl = "local" 
   def sparkTitle = getClass.getSimpleName
 }
 {% endhighlight %}
@@ -134,17 +134,20 @@ I already have a program that reads in the file and inserts the data to the data
   def main1(args: Array[String]): Unit = {
     val chunkSize = 50000
     val rawLines = Source.fromFile(file).getLines()
-    val scheduleLines = rawLines.filter(_.contains("JsonScheduleV1")).map(Json.parse(_) \ "JsonScheduleV1")
+    val scheduleLines = rawLines.filter(_.contains("JsonScheduleV1")).
+            map(Json.parse(_) \ "JsonScheduleV1")
 
     val scheduleData = scheduleLines.zipWithIndex.map { mapFn }
 
     val masterSlaveDefn = new MasterSlaveDefn(
       "service_for_blog",
-      List("id", "uid", "train_category", "train_service_code", "scheduleDayRuns", "schedule_start_date", "schedule_end_date"),
+      List("id", "uid", "train_category", "train_service_code", 
+             "scheduleDayRuns", "schedule_start_date", "schedule_end_date"),
       "service_segment_for_blob",
       List("service_id", "tiploc", "departure", "arrival"))
 
-    withDatasource { implicit dataSource => masterSlaveInsert(masterSlaveDefn, scheduleData) }
+    withDatasource { implicit dataSource => 
+       masterSlaveInsert(masterSlaveDefn, scheduleData) }
   }
 {% endhighlight %}
 This is a couple minor refactors of the code I used in the last blogs. All the verbose JSON parsing I put into a function called mapFn. The importance bit of the code is the for loop.
@@ -157,18 +160,21 @@ connections have to be declared on each node. Fortunately a RDD has a useful met
     withSparkAndFile(file) {
       implicit sc =>
         rawLines =>
-          val scheduleLines = rawLines.filter(_.contains("JsonScheduleV1")).map(Json.parse(_) \ "JsonScheduleV1")
+          val scheduleLines = rawLines.filter(_.contains("JsonScheduleV1")).
+             map(Json.parse(_) \ "JsonScheduleV1")
 
           val scheduleData = scheduleLines.zipWithIndex.map { mapFnLong }
 
           val masterSlaveDefn = new MasterSlaveDefn(
             "service_for_blog",
-            List("id", "uid", "train_category", "train_service_code", "scheduleDayRuns", "schedule_start_date", "schedule_end_date"),
+            List("id", "uid", "train_category", "train_service_code", 
+               "scheduleDayRuns", "schedule_start_date", "schedule_end_date"),
             "service_segment_for_blob",
             List("service_id", "tiploc", "departure", "arrival"))
 
           scheduleData.foreachPartition { chunk =>
-            withDatasource { implicit ds => masterSlaveInsert(masterSlaveDefn, chunk, chunkSize) }
+            withDatasource { implicit ds => 
+               masterSlaveInsert(masterSlaveDefn, chunk, chunkSize) }
           }
     }
 {% endhighlight %}
