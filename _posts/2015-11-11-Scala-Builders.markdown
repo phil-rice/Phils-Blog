@@ -145,6 +145,6 @@ It was remarkably easy to give my own data structure the goodness of the Scala c
 None of which took more than a few minutes to do. 
 
 If the Java class had been a Scala class, I could of implemented these in the companion object which would of meant I didn't need to do some import magic to use this,
-however as it's a Java class we need to make a dedicate object.
+however as it's a Java class we need to make a dedicated object.
 
 
