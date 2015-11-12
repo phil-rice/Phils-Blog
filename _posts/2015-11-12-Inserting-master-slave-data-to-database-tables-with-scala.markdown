@@ -112,7 +112,7 @@ list of schedule_locations, AKA ServiceSegments. The 'AKA' is another one of tho
 
 #Importing
 In the past I have had many difficult to track down issues when I import this sort of data in two goes: once to insert the services, and the second
-to insert the service segments. I am quite keen to insert them both at the same time. In this blog I'm not going to try and sort out transaction. The error handling
+to insert the service segments. I am quite keen to insert them both at the same time. In this blog I'm not going to try and sort out transactions. The error handling
 here will be 'if it goes wrong, it goes wrong'. 
 
 In order to do this insertion we are going to have to refactor the batchDataToDatabase method into two parts. We are going to be doing two batchInserts at the same time, and
@@ -121,17 +121,20 @@ we want to be able to reuse as much of the code as possible.
 The starting code is 
 
 {% highlight scala %}
- protected def dataToDatabase(tableName: String, columnNames: List[String], 
-                         data: Iterator[List[Any]])(implicit ds: DataSource) = {
+  protected def batchDataToDatabase(tableName: String, columnNames: List[String], data: Iterator[List[Any]], chunkSize: Int = 10000)(implicit ds: DataSource) = {
     val columnsWithCommas = columnNames.mkString(",")
     val questionMarks = columnNames.map(_ => "?").mkString(",")
     val sql = s"insert into $tableName ($columnsWithCommas) values ($questionMarks)"
-    for ((list, lineNo) <- data.zipWithIndex)
-      withPreparedStatement(sql, { implicit statement =>
-        for ((value, index) <- list.zipWithIndex)
-          statement.setObject(index + 1, value)
-        statement.execute
-      })
+    withPreparedStatement(sql, implicit statement => {
+      for (chunk <- data.sliding(chunkSize, chunkSize)) {
+        for { list <- chunk } {
+          for { (value, index) <- list.zipWithIndex }
+            statement.setObject(index + 1, value)
+          statement.addBatch()
+        }
+        statement.executeBatch()
+      }
+    })
   }
   {% endhighlight %}
   Looking at it we can easily break it up into two halves:
@@ -180,7 +183,7 @@ This allows us to reuse the 'withStatementForInsert' in order to create two stat
   }
 {% endhighlight %}
 That's a lot of plumbing! It creates a prepared statement for the master, another for the slave, and deals with all the 'making sure they are closed'. It also allows us to think about
-just the plumbing separated from the 'manipulating the tables' code. That code looks like this
+just the plumbing separated from the 'manipulating the tables' code. That 'manipulating the tables' code looks like this
 {% highlight scala %}
   def masterSlaveInsert(defn: MasterSlaveDefn, data: Iterator[MasterSlaveData], 
                         chunkSize: Int = 10000)(implicit ds: DataSource) =
@@ -242,4 +245,4 @@ I'm not unhappy with it. Most of the volumn of the code is about 'how do I get t
 of other 'load a load of data from a file and write it to a database'. Those other files are not JSON, but the database side doesn't really care about that: it just deals with List[Any].
 
 It still runs slow, taking over three minutes to run.  Even with the batch insert code it takes a long time to parse all the JSON and insert the results into the database. My performance monitor shows that I am only using a couple of cores 
-heavily though: one being the JVM, the other being the database. Next blog we will look at adding some parallelism
+heavily though: one being the JVM, the other being the database. The  next blog we will look at adding some parallelism using Apache Spark
