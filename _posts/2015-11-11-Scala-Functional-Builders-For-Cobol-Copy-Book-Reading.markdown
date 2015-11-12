@@ -153,7 +153,7 @@ case class CompCopyBookReader[X](compLength: Int)
 {% endhighlight %}
 
 #Composing the CopyBookReaders
-Now I have a thing I want to build, I have to tell the Functional building framework how to build it. This will let us use the lovely 'and' notation
+Now that I have my building blocks, I have to tell the Functional building framework how to build it. This will let us use the lovely 'and' notation
 that we saw in our earlier code samples.
 
 {% highlight scala %}
@@ -220,33 +220,6 @@ object CopyBookReader {
          new FunctorCopyBookReader[A, B](m, f)
   }
    ...
-}
-{% endhighlight %}
-
-#The primitive readers
-The following shows how the Num copy book reader is implemented. The other primitives are very similar
-
-{% highlight scala %}
-trait FixedLengthCopyBookReader[X] extends CopyBookReader[X] {
-  val buffer = new Array[Byte](length)
-  val default: X
-  def apply(implicit copyBookStream: CopyBookStream): X = {
-    val bytes = copyBookStream.read(buffer)
-    if (copyBookStream.hasMoreData)
-      reads(buffer)
-    else
-      default
-  }
-  def reads(bytes: Array[Byte]): X
-  def length: Int
-}
-case class NumCopyBookReader[X](length: Int) extends FixedLengthCopyBookReader[Int] {
-  val default = 0
-  def reads(bytes: Array[Byte]) = {
-    val result = bytes.foldLeft(0)((acc, v) =>
-      acc * 10 + (v & 0x0f))
-    result
-  }
 }
 {% endhighlight %}
 
