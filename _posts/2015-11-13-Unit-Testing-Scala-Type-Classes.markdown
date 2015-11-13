@@ -56,7 +56,7 @@ object Distance {
 Is it actually worth testing this? Well the answer is that actually there is a bug in the way the above code interacts with the matrix code. It was only by the Unit tests of matrix that I found it, and then I had to add to the DistanceLike tests to 
 make sure any future implements had it.
 
-Anyway let's make the rough test framework. I am going to make an abstract test called 'DistanceLikeTest' which will be parameterised by D and then make concrete classes for DistanceLikeTest[Int] and DistanceLikeTest[Int]. The reflection
+Anyway let's make the rough test framework. I am going to make an abstract test called 'DistanceTests' which will be parameterised by D and then make concrete classes for DistanceTests[Int] and DistanceTests[Short]. The reflection
 in scala-test will sweep them up, so that's all the plumbing I will have to do
 
 Let's look at this approach
@@ -68,7 +68,6 @@ abstract class DistanceTests[D: Distance] extends FlatSpec with Matchers {
 class DistanceIntTests extends DistanceTests[Int]
 class DistanceShortTests extends DistanceTests[Short]
 {% endhighlight %}
-
 
 #Writing tests when you don't know the data type
 Let's write our first few tests. The first few methods are zero/large/random and add. I am not interested in trying to test Random: it's hard and I think unlikely to give me many wins. My first stab at these tests is
@@ -104,15 +103,20 @@ Well that reads well. But obviously doesn't compile. How do we code up the numbe
 Well that's interesting. The implicit toD (not defined in DistanceLike[D]) will do the conversion of 0,1,2,3 to zero,one,two,three. This makes our two concrete classes slightly bigger. 
 
 {% highlight scala %}
-class DistanceIntTests extends DistanceTests[Int] { implicit def toD(x: Int) = x; val large = Int.MaxValue }
-class DistanceShortTests extends DistanceTests[Short] { implicit def toD(x: Int) = x.toShort; val large = Short.MaxValue }
+class DistanceIntTests extends DistanceTests[Int] { 
+  implicit def toD(x: Int) = x; val large = Int.MaxValue 
+}
+class DistanceShortTests extends DistanceTests[Short] { 
+   implicit def toD(x: Int) = x.toShort; val large = Short.MaxValue 
+}
 {% endhighlight %}
+
  #Running the tests
  In SBT I use the ~test quite a lot. This compiles and runs everything whenever the code base changes. The other things I do quite a lot is right click on the package on my IDE and 'run package as scala test'. Both work
  
  And these tests just pass. Something that makes me nervous, so I added a '1 shouldBe 2' to a couple of tests and reran then just to check that the tests were actually being executed!
  
- #a few more tests
+ #A few more tests
  We need to check that the Distance methods makeArray and makeArrayArray are implemented. Again these are easy
 {% highlight scala %}   
    "Distance" should "implement makeArray" in {
@@ -134,14 +138,18 @@ class DistanceShortTests extends DistanceTests[Short] { implicit def toD(x: Int)
  And these worked too.
  
  Job done. It didn't take long, and if I decide to implement Distance for Floating point numbers all I need to do is add the following and that TypeClass will be tests
- {% highlight scala %}
- class DistanceFloatTests extends DistanceTests[Float] { implicit def toD(x: Int) = x.toFloat; val large = /*whatever we put in the Distance type class */ }
+{% highlight scala %}
+class DistanceFloatTests extends DistanceTests[Float] { 
+    implicit def toD(x: Int) = x.toFloat; 
+    val large = /*whatever we put in the Distance type class */ 
+}
 {% endhighlight %}
 
 #Matrix Like tests
 I mostly used the same approach, and very quickly had this 
 {% highlight scala %}
-abstract class MatrixLikeTests[D: Distance, MM](implicit matrixLike: Matrix[D, MM]) extends WordSpec with Matchers {
+abstract class MatrixLikeTests[D: Distance, MM](
+        implicit matrixLike: Matrix[D, MM]) extends WordSpec with Matchers {
   val distanceLike = implicitly[Distance[D]]
   import matrixLike._
   implicit def toD(x: Int): D
@@ -171,10 +179,12 @@ abstract class MatrixLikeTests[D: Distance, MM](implicit matrixLike: Matrix[D, M
   }
 }
 
-abstract class MatrixLikeIntTests[MM](implicit matrixLike: Matrix[Int, MM]) extends MatrixLikeTests[Int, MM] {
+abstract class MatrixLikeIntTests[MM](implicit matrixLike: Matrix[Int, MM]) 
+               extends MatrixLikeTests[Int, MM] {
   implicit def toD(x: Int) = x;
 }
-abstract class MatrixLikeShortTests[MM](implicit matrixLike: Matrix[Short, MM]) extends MatrixLikeTests[Short, MM] {
+abstract class MatrixLikeShortTests[MM](implicit matrixLike: Matrix[Short, MM]) 
+               extends MatrixLikeTests[Short, MM] {
   implicit def toD(x: Int) = x.toShort;
 }
 
@@ -188,14 +198,17 @@ All pretty straight forwards and passed first time.
 I started this saying that I didn't have working mileage calculations. The mileage calculations are more complicated than distance. There is no doubt in 'shall we test this'. It's complicated and already
 has a bug! Let's look at how the same approach would work
 {% highlight scala %}
-abstract class MileageTests[D: Distance, MM](implicit matrixLike: Matrix[D, MM]) extends WordSpec with Matchers {
+abstract class MileageTests[D: Distance, MM](implicit matrixLike: Matrix[D, MM]) 
+               extends WordSpec with Matchers {
   val mf = new MileageFactory1[D, MM]
   
 }
-abstract class MileageIntTests[MM](implicit matrixLike: Matrix[Int, MM]) extends MileageTests[Int, MM] {
+abstract class MileageIntTests[MM](implicit matrixLike: Matrix[Int, MM]) 
+               extends MileageTests[Int, MM] {
   implicit def toD(x: Int) = x; 
 }
-abstract class MileageShortTests[MM](implicit matrixLike: Matrix[Short, MM]) extends MileageTests[Short, MM] {
+abstract class MileageShortTests[MM](implicit matrixLike: Matrix[Short, MM]) 
+               extends MileageTests[Short, MM] {
   implicit def toD(x: Int) = x.toShort; 
 }
 
@@ -230,7 +243,7 @@ abstract class MileageTests[D: Distance, MM](implicit matrixLike: Matrix[D, MM])
       }
       "have a large value for other mileages" in {
         for { i <- 0 to 2; j <- 0 to 2 if i != j } {
-          mm(i,j).getClass shouldBe large.getClass
+          mm(i, j).getClass shouldBe large.getClass
           mm(i, j) shouldBe large
           mm(j, i) shouldBe large
         }
@@ -238,21 +251,23 @@ abstract class MileageTests[D: Distance, MM](implicit matrixLike: Matrix[D, MM])
     }
 
     "all combinations given" should {
-      val mm = mf(3, List((0, 1, 10), (0, 2, 20), (1, 2, 25)))
       "return 0 for form/to being the same" in {
+        val mm = mf(3, List((0, 1, 10), (0, 2, 20), (1, 2, 25)))
         mm(0, 0) shouldBe 0
         mm(1, 1) shouldBe 0
         mm(2, 2) shouldBe 0
       }
       "return the stated combinations" in {
+        val mm = mf(3, List((0, 1, 10), (0, 2, 20), (1, 2, 25)))
         mm(0, 1) shouldBe 10
-        mm(0, 2) shouldBe 10
-        mm(1, 2) shouldBe 10
+        mm(0, 2) shouldBe 20
+        mm(1, 2) shouldBe 25
       }
       "return the inverse combinations" in {
+        val mm = mf(3, List((0, 1, 10), (0, 2, 20), (1, 2, 25)))
         mm(1, 0) shouldBe 10
-        mm(2, 0) shouldBe 10
-        mm(2, 1) shouldBe 10
+        mm(2, 0) shouldBe 20
+        mm(2, 1) shouldBe 25
       }
     }
     "some combinations not given" should {
@@ -265,11 +280,13 @@ abstract class MileageTests[D: Distance, MM](implicit matrixLike: Matrix[D, MM])
   }
 }
 
-abstract class MileageIntTests[MM](implicit matrixLike: Matrix[Int, MM]) extends MileageTests[Int, MM] {
+abstract class MileageIntTests[MM](implicit matrixLike: Matrix[Int, MM]) 
+              extends MileageTests[Int, MM] {
   implicit def toD(x: Int) = x; 
   implicit def toMileage(t: (Int, Int, Int)) = MileageEdge(t._1, t._2, t._3)
 }
-abstract class MileageShortTests[MM](implicit matrixLike: Matrix[Short, MM]) extends MileageTests[Short, MM] {
+abstract class MileageShortTests[MM](implicit matrixLike: Matrix[Short, MM]) 
+               extends MileageTests[Short, MM] {
 	implicit def toD(x: Int) = x.toShort; 
   implicit def toMileage(t: (Int, Int, Int)) = MileageEdge(t._1, t._2, t._3.toShort)
 }
@@ -279,6 +296,15 @@ class MilageMapMapShortTests extends MileageShortTests[Map[Int, Map[Int, Short]]
 {% endhighlight %}
 And...the behaviour of these tests was just embarressing... -2147483648 was not equal to 2147483647. A warm red glow hit me cheeks and my forehead hit the table. The problem was that I was adding numbers to 'large' and then comparing them. Adding
 anything to large made them overflow, and they became a negative number. In otherwards I add to do the following 
+
+{% highlight scala %}
+  "Distance" should "implment addition with large to always return large" in {
+	  distanceLike.add(one, two) shouldBe three
+	  distanceLike.add(one, large) shouldBe large
+	  distanceLike.add(large, two) shouldBe large
+  }
+{% endhighlight %}
+And when they failed I changed the implementation in Distance
 
 {% highlight scala %}
 trait Distance[D] {
@@ -291,15 +317,8 @@ object Distance {
     def addRaw(d1: Int, d2: Int) = d1 + d2
   }
 {% endhighlight %}
-And add another test
-{% highlight scala %}
-  "Distance" should "implment addition with large to always return large" in {
-	  distanceLike.add(one, two) shouldBe three
-	  distanceLike.add(one, large) shouldBe large
-	  distanceLike.add(large, two) shouldBe large
-  }
-{% endhighlight %}
+
  
- #Summary
- The Type Classes were remarkably easy to write unit tests for. An abstract class for the behaviour, and a concrete class for each implementation. As ever implicits helped make the tests easy to write and just as easy to read
+#Summary
+The Type Classes were remarkably easy to write unit tests for. An abstract class for the behaviour, and a concrete class for each implementation. As ever implicits helped make the tests easy to write and just as easy to read
  
