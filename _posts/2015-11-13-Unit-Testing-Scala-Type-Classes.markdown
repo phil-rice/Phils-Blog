@@ -8,7 +8,7 @@ I had cut and paste the code out of 'working tested code', but hadn't checked th
 
 I haven't read much on this sort of testing: Testing of code with generics in it, so I thought I would write something about it
 
-The code in here can be found in https://github.com/phil-rice/MileageForBlog
+[The code in here can be found here](https://github.com/phil-rice/MileageForBlog)
 
 #Test framework for Scala
 The default test framework for Scala is Scala-Test as far as I can see. I have used it for a couple of years and like it quite a lot. I've been using JUnit since the 1990s and still return to it
@@ -34,8 +34,8 @@ trait Distance[D] {
   def random: D
   def add(d1: D, d2: D): D
   def lessThan(d1: D, d2: D): Boolean
-  def makeArray(size: Int, value: D): Array[D] //needed because Arrays need ClassTags which are painful
-  def makeArrayArray(size: Int, value: D): Array[Array[D]] //needed because Arrays need ClassTags which are painful
+  def makeArray(size: Int, value: D): Array[D] 
+  def makeArrayArray(size: Int, value: D): Array[Array[D]]
 }
 {% endhighlight %}
 And the implementation for Int is pretty simple
