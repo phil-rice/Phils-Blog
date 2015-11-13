@@ -194,6 +194,7 @@ Some searching shows me that I am using Hadoop 2.2.0, play 2.4.2 and spark 1.4.1
 >libraryDependencies += "org.apache.spark" % "spark-core_2.11" % "1.5.1"
 >
 >libraryDependencies += "org.apache.hadoop" % "hadoop-common" % "2.2.0"
+
 The good old 'clean' no... really clean. Followed by a compile and a run gives 
 
 {% highlight scala %}
