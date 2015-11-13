@@ -8,6 +8,8 @@ I had cut and paste the code out of 'working tested code', but hadn't checked th
 
 I haven't read much on this sort of testing: Testing of code with generics in it, so I thought I would write something about it
 
+The code in here can be found in https://github.com/phil-rice/MileageForBlog
+
 #Test framework for Scala
 The default test framework for Scala is Scala-Test as far as I can see. I have used it for a couple of years and like it quite a lot. I've been using JUnit since the 1990s and still return to it
 for some jobs, but most new tests I write in Scala Test. The IDE integration is 'awkward' and keeps 'failing', meaning that I have to be happy to use it from SBT, but that's not actually a big burden.
