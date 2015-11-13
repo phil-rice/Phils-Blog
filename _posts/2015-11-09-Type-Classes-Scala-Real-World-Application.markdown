@@ -215,9 +215,9 @@ class MileageFactory1[D: Distance, MM](implicit matrixLike: Matrix[D, MM]) exten
   def apply(locationSize: Int, edges: Traversable[MileageEdge[D]]) = {
     val locs = 0 to locationSize - 1
     var mm = createAndInitialiseMatrix(locationSize, edges)
-    for { k <- locs; i <- locs; j <- locs } {
-      val newDistance = add(get(mm, i, j), get(mm, k, j))
-      if (lessThan(get(mm, i, j), newDistance))
+ for { k <- locs; i <- locs; j <- locs } {
+      val newDistance = add(get(mm, i, k), get(mm, k, j))
+      if (lessThan(newDistance, get(mm, i, j)))
         mm = put(mm, i, j, newDistance)
     };
     new Mileage(mm)
