@@ -12,6 +12,7 @@ as a way of quickly adding parallelism to the import.
 
 #Getting Going
 I need to add the apache spark dependancies to my project in my build.sbt
+
 >libraryDependencies += "org.apache.spark" %% "spark-core"%  "1.4.1"
 
 #Hello World
@@ -100,32 +101,6 @@ This allows our main method to look like
       rawLines =>
         val lines = rawLines.zipWithIndex.map { case (line, index) => f"$index%2d $line" }
         lines.foreach { println }
-    }
-  }
-{% endhighlight %}
-
-#Moving onto large files with JSON
-I already have my 'master slave import program'
-
-
-##BOOM
-I ran the program after adding these to check it still worked, and somewhat to my horror it didn't. I got 
-Exception in thread "main" com.fasterxml.jackson.databind.JsonMappingException: Could not find creator property with name 'id' (in class org.apache.spark.rdd.RDDOperationScope)
- at [Source: {"id":"0","name":"textFile"}; line: 1, column: 1]
- 
-Fortunately some google-fu led me to http://stackoverflow.com/questions/31039367/spark-parallelize-could-not-find-creator-property-with-name-id which lead to the following 
-lines for the build.sbt
-
->dependencyOverrides ++= Set(
->  "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4"
->)
-
-And now the program works. I changed the file to point to the JSON file, and that worked as well 
-{% highlight scala %}
-  def main(args: Array[String]): Unit = {
-    val jsonFile = "src/main/resources/Cif.json"
-    withSparkAndFile(jsonFile) { sparkContext =>
-      rawLines =>  rawLines.foreach { println }
     }
   }
 {% endhighlight %}
