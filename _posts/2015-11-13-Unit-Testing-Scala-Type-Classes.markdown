@@ -134,11 +134,11 @@ class DistanceShortTests extends DistanceTests[Short] { implicit def toD(x: Int)
  Job done. It didn't take long, and if I decide to implement Distance for Floating point numbers all I need to do is add the following and that TypeClass will be tests
  {% highlight scala %}
  class DistanceFloatTests extends DistanceTests[Float] { implicit def toD(x: Int) = x.toFloat; val large = /*whatever we put in the Distance type class */ }
-  {% endhighlight %}
+{% endhighlight %}
 
 #Matrix Like tests
 I mostly used the same approach, and very quickly had this 
-% highlight scala %}
+{% highlight scala %}
 abstract class MatrixLikeTests[D: Distance, MM](implicit matrixLike: Matrix[D, MM]) extends WordSpec with Matchers {
   val distanceLike = implicitly[Distance[D]]
   import matrixLike._
@@ -272,7 +272,7 @@ abstract class MileageShortTests[MM](implicit matrixLike: Matrix[Short, MM]) ext
   implicit def toMileage(t: (Int, Int, Int)) = MileageEdge(t._1, t._2, t._3.toShort)
 }
 
-class MilageArrayArrayIntTests extends MileageIntTests[Array[Array[Int]]]
+class MilageArrayArrayIntTests extends MileageIntTests[Array[Array[Int]]] 
 class MilageMapMapShortTests extends MileageShortTests[Map[Int, Map[Int, Short]]]
 {% endhighlight %}
 And...the behaviour of these tests was just embarressing... -2147483648 was not equal to 2147483647. A warm red glow hit me cheeks and my forehead hit the table. The problem was that I was adding numbers to 'large' and then comparing them. Adding
@@ -296,7 +296,7 @@ And add another test
 	  distanceLike.add(one, large) shouldBe large
 	  distanceLike.add(large, two) shouldBe large
   }
- {% endhighlight %}
+{% endhighlight %}
  
  #Summary
  The Type Classes were remarkably easy to write unit tests for. An abstract class for the behaviour, and a concrete class for each implementation. As ever implicits helped make the tests easy to write and just as easy to read
