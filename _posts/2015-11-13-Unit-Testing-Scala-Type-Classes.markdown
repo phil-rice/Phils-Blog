@@ -295,7 +295,7 @@ class MilageArrayArrayIntTests extends MileageIntTests[Array[Array[Int]]]
 class MilageMapMapShortTests extends MileageShortTests[Map[Int, Map[Int, Short]]]
 {% endhighlight %}
 And...the behaviour of these tests was just embarressing... -2147483648 was not equal to 2147483647. A warm red glow hit my cheeks and my forehead hit the table. The problem was that I was adding numbers to 'large' and then comparing them. Adding
-anything to large made them overflow, and they became a negative number. In otherwards I add to do the following 
+anything to large made them overflow, and they became a negative number. In otherwards I had to do the following 
 
 {% highlight scala %}
   "Distance" should "implment addition with large to always return large" in {
