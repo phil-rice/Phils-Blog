@@ -13,6 +13,10 @@ This is an activity that it would be ‘good thing’ to do quickly. Even taking
 and a goal is to have the whole batch done done in under two minutes. Part of this activity, which is only executed once, is to either calculate the mileage data, or to load the 
 results (whichever is quicker).
 
+Most of the code in here can be found in https://github.com/phil-rice/MileageForBlog
+
+There is a a [discussion on Unit Testing this sort of code](/2015/11/11/Unit-Testing-Scala-Type-Classes.html) which changes a little of the code in the Distance Type Class. See 
+
 ## Quick stats
 
 |Type|Expected number|
