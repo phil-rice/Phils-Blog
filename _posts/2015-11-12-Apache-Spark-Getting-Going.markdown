@@ -119,7 +119,8 @@ lines for the build.sbt
 >dependencyOverrides ++= Set(
 >  "com.fasterxml.jackson.core" % "jackson-databind" % "2.4.4"
 >)
-And now the program works. Changing the file to point to the JSON file, worked as well 
+
+And now the program works. I changed the file to point to the JSON file, and that worked as well 
 {% highlight scala %}
   def main(args: Array[String]): Unit = {
     val jsonFile = "src/main/resources/Cif.json"
