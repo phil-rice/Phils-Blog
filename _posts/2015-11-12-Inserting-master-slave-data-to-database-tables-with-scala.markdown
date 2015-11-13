@@ -7,7 +7,7 @@ Earlier I discussed the problem of getting a file full of JSON data that is abou
 interested in was 'Services'. What I didn't do was explain that as well as the services, there are 'service segments'. Each of the JSON maps that describes a service
 also contains a list of ServiceSegments. 
 
-This is looking at the impact of importing both at the same time
+[The code for this can be found here](https://github.com/phil-rice/HelloSpark) 
 
 #Creating the ServiceSegment table
  {% highlight sql %}

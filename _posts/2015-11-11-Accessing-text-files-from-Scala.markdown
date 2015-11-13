@@ -14,6 +14,8 @@ As long as the time is less then 'a few minutes' I will be happy
 Importantly I don't need any of the 'go find line number x', or 'mark' and 'reset' functionality. In essence I want to be able to do Map/Reduce (or Map/FoldLeft) on the 
 lines of the file. Quite often the result of the fold will be Unit as I will be doing things like 'sending the data to a service', 'printing it to a report' or 'sending it to a database'
 
+[The code for this can be found here](https://github.com/phil-rice/HelloSpark)  
+
 #Getting Going
 As ever the first thing to do is to set up my IDE (Eclipse). To do this I create a directory until ~/git, copy a .gitIgnore and a build.sbt file from 'somewhere else', edit the
 build.sbt and run 'sbt eclipse'.  The SBT file I am using is 

@@ -6,6 +6,8 @@ date:   2015-11-11 12:06:23 +0000
 I have a file full of JSON data that is about two gigabyte long. I want to import it into a database tables There are actually three types of JSON in the file, and as would be
 expected the schema is very rigid. Each line of the file is a block of JSON and represents a 'Service'.
 
+[The code for this can be found here](https://github.com/phil-rice/HelloSpark) 
+
 #Goals
 * I obviously want the process to be 'reasonably quick'. I don't have to worry too much about performance as I will only be doing this a few times a day. 
 As long as the time is less then 'a few minutes' I will be happy

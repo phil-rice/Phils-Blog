@@ -8,6 +8,8 @@ date:   2015-11-12 19:06:23 +0000
 My last few blogs have been about reading a large amount of data from a JSON file and inserting it into a database. I thought I would a little introduction to Apache Spark
 as a way of quickly adding parallelism to the import.
 
+[The code for this can be found here](https://github.com/phil-rice/HelloSpark) 
+
 #Getting Going
 I need to add the apache spark dependancies to my project in my build.sbt
 >libraryDependencies += "org.apache.spark" %% "spark-core"%  "1.4.1"

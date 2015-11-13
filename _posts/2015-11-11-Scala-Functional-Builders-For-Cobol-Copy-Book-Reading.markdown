@@ -7,7 +7,7 @@ date:   2015-11-10 08:06:23 +0000
 I have to read some data from a mainframe system. The files are defined using ['cobol copy books'](http://www.tutorialspoint.com/cobol/cobol_data_layout.htm) 
 The performance of this reading is not very important, and I am going to have a number of different files to read
 
-The code for this can be found in https://github.com/phil-rice/CobolCopyBookReader
+[The code for this can be found here](https://github.com/phil-rice/CobolCopyBookReader)
 
 ##What's gone before
 I was surprised to find very little in the way of conversion projects, other than commercial offerings. The ones that existed didn't seem to be maintained. The ones I looked

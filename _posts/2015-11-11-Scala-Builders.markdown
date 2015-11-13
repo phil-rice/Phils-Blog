@@ -7,7 +7,7 @@ date:   2015-11-10 11:06:23 +0000
 I am currently in the unhappy position of having to use a Java data structure to hold my data. The data structure  will be accessed several billion times in under two minutes, and long[] is 
 sufficiently quicker than Array[Long], that the pain is worth it. The longs in the long[] are actually going to be an AnyVal class OttAsLong.  
 
-The code for this can be found at https://github.com/phil-rice/ScalaBuildersBlog
+[The code for this can be found here](https://github.com/phil-rice/ScalaBuildersBlog)
 
 {% highlight java %}
 public class LongArrayAndLength {
