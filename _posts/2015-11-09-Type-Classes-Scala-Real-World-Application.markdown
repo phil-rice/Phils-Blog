@@ -23,7 +23,7 @@ results (whichever is quicker).
 
 There are three entities that need considering in this profiling example, and I will be looking at how Type Classes can help ease the task of evaluating options. The entities are
 
-|Distance|How far between places. In the actual problem the resolution of distance is 1/100 of a mile|
+|Distance|How far between locations. Resolution is 1/100 of a mile|
 |Mileage Matrix|Given two locations this matrix holds the distance between those two locations.| 
 |Mileage Matrix Factory|The code used to create a Mileage Matrix|
 
@@ -69,7 +69,6 @@ object Distance {
   }
 }
 {% endhighlight %}
-
 I first came across this pattern as the Flyweight pattern in the Gang Of Four. In Java I very rarely use it because the code becomes painful to read. In Scala that is much less so.
 
 ## Using the distance type class
@@ -106,6 +105,11 @@ object UsingDistanceDemo {
     implicitly[Distance[D]].lessThan(addDistance(distances:_*), targetDistance)
 }
 {% endhighlight %}
+
+In practice I found that adding methods to distance like zero, large and random, made it really useful while testing. I could write a test framework for 'testing distancelike behaviour' and then just inherit from
+it with the concrete class. Another useful thing was being able to make arrays of things with distancelike behaviour. In Java it is hard to create an array for a something when you don't know what concrete type 
+it is. Normally you end up having to pass some plumbing around: In Java I usually pass around the class of the type. With this pattern, I only put 'create the array' code in concrete classes, so no more plumbing. Mind
+you for most code I don't care: I only use Arrays when I am worrying about highly performant code, as part of a profiling activity. 
 
 By the end of the profiling, many more methods were added to Distance, ending up with 
 {% highlight scala %}
@@ -180,8 +184,8 @@ object Matrix {
 {% endhighlight %}
 
 #Calculating the mileage.
-The Floyd Warshell algorithm is simple to use and understand and does exactly what is needed. I did have to edit the wiki page (a very scary moment) as there was an error on it involved a
- ‘<’ sign.  https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm
+The [Floyd Warshell algorithm](https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm) is simple to use and understand and does exactly what is needed. I did have to edit the wiki page (a very scary moment) as there was an error on it involved a
+ ‘<’ sign.  
  
  Unfortunately as we shall see the really nice 'D: Distance' notation cannot be used with Matrixes. It would be nice if we could have MileageFactory[D: Distance: Matrix[D]], but Scala (as 
  far as I know) has no mechanism for this. If I'm wrong please let me know! Even so the code is not too ugly
@@ -192,15 +196,16 @@ abstract class MileageFactory[D: Distance, MM](implicit matrixLike: Matrix[D, MM
   protected val distanceLike = implicitly[Distance[D]]
   import distanceLike._
   def apply(locationSize: Int, edges: Traversable[MileageEdge[D]]): Mileage[D, MM]
-   protected def createAndInitialiseMatrix(locationSize: Int, edges: Traversable[MileageEdge[D]]) = {
+  protected def createAndInitialiseMatrix(locationSize: Int, edges: Traversable[MileageEdge[D]]) = {
     val withLocToLocBeingZero = (0 to locationSize - 1).
       foldLeft(matrixLike.makeRaw(locationSize, large))(
         (hs, loc) => put(hs, loc, loc, zero))
     edges.foldLeft(withLocToLocBeingZero) {
       case (mm, MileageEdge(from, to, distance)) =>
-        put(put(mm, from, to, zero), to, from, zero)
+        put(put(mm, from, to, distance), to, from, distance)
     }
   }
+}
 }
 
 /** D is how the distance is measured, and MM is the mileage matrix representation  */
