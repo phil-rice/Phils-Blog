@@ -19,10 +19,6 @@ One of the things I dislike intensely in a project is bringing in an open source
 to the problems, and I don't like those sort of problems. Both Scala-test and  JUnit are very lightweight and doesn't cause me problems. 
 
 To use scala test I add the following to Build.sbt
-
-
-#JUnit with scala.
-This is really easy to do. It reads like standard JUnit tests.
 >libraryDependencies +=   "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 
 #Simple Typeclass tests
