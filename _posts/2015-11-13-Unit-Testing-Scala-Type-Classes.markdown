@@ -2,6 +2,7 @@
 layout: post
 title: "Unit Testing Scala Type Classes"
 date:   2015-11-11 13:06:23 +0000
+comments: True
 ---
 I was checking my first few blogs to see if they 'work' when I cut and paste the code, and discovered to my horror that actually they didn't.
 I had cut and paste the code out of 'working tested code', but hadn't checked the code samples properly. By check I mean 'have Unit Tests'. 

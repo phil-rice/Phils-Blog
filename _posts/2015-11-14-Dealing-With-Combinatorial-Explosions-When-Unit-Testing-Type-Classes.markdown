@@ -2,6 +2,7 @@
 layout: post
 title: "Dealing With Combinatorial Explosions When Unit Testing"
 date:   2015-11-14 08:06:23 +0000
+comments: True
 ---
 In my previous post when on scala test with type classes, I showed how an abstract class could be used, and then each concrete instance of the type class could inherit it. This worked really 
 well with such things as Distance:

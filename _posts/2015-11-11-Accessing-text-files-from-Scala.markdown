@@ -2,6 +2,7 @@
 layout: post
 title: "Accessing text files from Scala"
 date:   2015-11-11 12:06:23 +0000
+comments: True
 ---
 I have a file full of JSON data that is about two gigabyte long. I want to import it into a database table. This triggered me to think
 a little about the best way of accessing text files from Scala. My needs are simple

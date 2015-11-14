@@ -2,7 +2,9 @@
 layout: post
 title:  "Type Classes in Scala: A Real World Application"
 date:   2015-11-09 11:06:23 +0000
+comments: True
 ---
+
 #Overview
 I am engaged in a legacy modernisation task on a job that is working out the possible routes that people might of traveled on. 
 The modernisation project will take many tens of man years of developer time, and because there are significant sums of money 
