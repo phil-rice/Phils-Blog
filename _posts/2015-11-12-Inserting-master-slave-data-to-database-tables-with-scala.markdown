@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Inserting master-slave data to database tables with Scala"
-date:   2015-11-13 13:06:23 +0000
+date:   2015-11-12 13:06:23 +0000
 ---
 Earlier I discussed the problem of getting a file full of JSON data that is about two gigabyte long into a database. I mentioned that the data in the file that I was
 interested in was 'Services'. What I didn't do was explain that as well as the services, there are 'service segments'. Each of the JSON maps that describes a service

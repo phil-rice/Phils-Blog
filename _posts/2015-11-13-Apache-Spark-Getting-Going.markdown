@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Getting going with Apache Spark"
-date:   2015-11-12 19:06:23 +0000
+date:   2015-11-13 19:06:23 +0000
 ---
 
 #Overview

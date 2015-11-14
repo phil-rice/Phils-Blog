@@ -36,7 +36,8 @@ class DistanceShortTests extends DistanceTests[Short] {
 
 However when we moved to more MatrixLike, we needed to instantiate an instance with each concrete class for distance, and each concrete type for the matrix:
 {% highlight scala %}
-abstract class MatrixLikeTests[D: Distance, MM](implicit matrixLike: Matrix[D, MM]) extends WordSpec with Matchers {
+abstract class MatrixLikeTests[D: Distance, MM](implicit matrixLike: Matrix[D, MM]) 
+          extends WordSpec with Matchers {
   val distanceLike = implicitly[Distance[D]]
   import matrixLike._
   implicit def toD(x: Int): D
@@ -218,10 +219,12 @@ I now have a choice between
 
   s"Matrix[Short,JavaShortArrayAndLength}]" should { 
           behave like matrix(distanceDefns(0), 
-                 MatrixTestDefn("JavaShortArrayAndLength", d => Matrix.MatrixJavaShortArrayAndLengthLike)) }
+                 MatrixTestDefn("JavaShortArrayAndLength",
+                                 d => Matrix.MatrixJavaShortArrayAndLengthLike)) }
   s"Matrix[Int,JavaIntArrayAndLength}]" should { 
          behave like matrix(distanceDefns(1), 
-                 MatrixTestDefn("JavaIntArrayAndLength", d => Matrix.MatrixJavaIntArrayAndLengthLike)) }
+                 MatrixTestDefn("JavaIntArrayAndLength", 
+                                 d => Matrix.MatrixJavaIntArrayAndLengthLike)) }
 {% endhighlight %}
 
 and
