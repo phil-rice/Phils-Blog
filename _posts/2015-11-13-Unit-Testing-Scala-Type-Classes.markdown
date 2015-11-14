@@ -19,6 +19,7 @@ One of the things I dislike intensely in a project is bringing in an open source
 to the problems, and I don't like those sort of problems. Both Scala-test and  JUnit are very lightweight and doesn't cause me problems. 
 
 To use scala test I add the following to Build.sbt
+
 >libraryDependencies +=   "org.scalatest" %% "scalatest" % "2.2.4" % "test"
 
 #Simple Typeclass tests
@@ -49,8 +50,8 @@ object Distance {
   } 
 {% endhighlight %}
   
-Is it actually worth testing this? Well the answer is that actually there is a bug in the way the above code interacts with the matrix code. It was only by the Unit tests of matrix that I found it, and then I had to add to the DistanceLike tests to 
-make sure any future implements had it.
+Is it actually worth testing this? Well the answer is that actually there is a bug in the way the above code interacts with the matrix code. Arguably it's a bug in the above code. The bug is in the method add. 
+It was only by the Unit tests of matrix that I found it, and then I had to add to the DistanceLike tests to make sure any future implements had it.
 
 Anyway let's make the rough test framework. I am going to make an abstract test called 'DistanceTests' which will be parameterised by D and then make concrete classes for DistanceTests[Int] and DistanceTests[Short]. The reflection
 in scala-test will sweep them up, so that's all the plumbing I will have to do
