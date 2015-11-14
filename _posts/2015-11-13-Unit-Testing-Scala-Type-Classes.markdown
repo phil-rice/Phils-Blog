@@ -24,8 +24,8 @@ To use scala test I add the following to Build.sbt
 
 #Simple Typeclass tests
 Our distance class is really simple. Distance is
-{% highlight scala %}
 trait Distance[D] {
+{% highlight scala %}
   def zero: D
   def large: D
   def random: D
@@ -76,15 +76,15 @@ Let's write our first few tests. The first few methods are zero/large/random and
     distanceLike.large shouldBe large
   }
 
-  "Distance" should "implment addition" in {
+  it should "implment addition" in {
     distanceLike.add(one, two) shouldBe three
   }
-  "Distance" should "implement less than" in {
+  it should "implement less than" in {
     distanceLike.lessThan(one, two) shouldBe true
     distanceLike.lessThan(two, one) shouldBe false
     distanceLike.lessThan(one, one) shouldBe false
   }
-  "Distance" should "implment addition" in {
+  it should "implment addition" in {
     distanceLike.add(one, two) shouldBe three
   }
 {% endhighlight %}
@@ -123,7 +123,7 @@ In SBT I use the command '~test' quite a lot. This compiles and runs everything 
     for (i <- 0 to 4) array(i) shouldBe one
   }
   
-  "Distance" should "implement makeArrayArray" in {
+  it should "implement makeArrayArray" in {
     val array = distanceLike.makeArrayArray(5, one)
     array.length shouldBe 5
     for (i <- 0 to 4) {
@@ -156,7 +156,7 @@ abstract class MatrixLikeTests[D: Distance, MM](
   def two: D = 2
   def three: D = 3
   "Matrix" when {
-    "makeRaw callsed" should {
+    "makeRaw called" should {
       "be full of the value" in {
         val m = makeRaw(5, two)
         for { i <- 0 to 4; j <- 0 to 4 } get(m, i, j) shouldBe two

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Scala Functional Builder for Cobol Copy Book Readers"
-date:   2015-11-10 08:06:23 +0000
+date:   2015-11-11 08:06:23 +0000
 ---
 #Overview
 I have to read some data from a mainframe system. The files are defined using ['cobol copy books'](http://www.tutorialspoint.com/cobol/cobol_data_layout.htm) 

@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Scala Builders for Java Classes"
-date:   2015-11-10 11:06:23 +0000
+date:   2015-11-11 11:06:23 +0000
 ---
 
 I am currently in the unhappy position of having to use a Java data structure to hold my data. The data structure  will be accessed several billion times in under two minutes, and long[] is 
