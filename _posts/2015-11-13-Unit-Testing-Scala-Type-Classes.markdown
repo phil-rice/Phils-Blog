@@ -108,12 +108,13 @@ class DistanceShortTests extends DistanceTests[Short] {
 }
 {% endhighlight %}
 
- #Running the tests
- In SBT I use the ~test quite a lot. This compiles and runs everything whenever the code base changes. The other things I do quite a lot is right click on the package on my IDE and 'run package as scala test'. Both work
+#Running the tests
+ 
+In SBT I use the command '~test' quite a lot. This compiles and runs everything whenever the code base changes. The other things I do quite a lot is right click on the package on my IDE and 'run package as scala test'. Both work
  
  And these tests just pass. Something that makes me nervous, so I added a '1 shouldBe 2' to a couple of tests and reran then just to check that the tests were actually being executed!
  
- #A few more tests
+#A few more tests
  We need to check that the Distance methods makeArray and makeArrayArray are implemented. Again these are easy
 {% highlight scala %}   
    "Distance" should "implement makeArray" in {
