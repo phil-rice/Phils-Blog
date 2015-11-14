@@ -51,7 +51,8 @@ object Distance {
 {% endhighlight %}
   
 Is it actually worth testing this? Well the answer is that actually there is a bug in the way the above code interacts with the matrix code. Arguably it's a bug in the above code. The bug is in the method add. 
-It was only by the Unit tests of matrix that I found it, and then I had to add to the DistanceLike tests to make sure any future implements had it.
+It was only by the Unit tests of matrix that I found it, and then I had to add to the DistanceLike tests to make sure any future implements had it. I'll explain the bug later, just see if you
+can see it now.
 
 Anyway let's make the rough test framework. I am going to make an abstract test called 'DistanceTests' which will be parameterised by D and then make concrete classes for DistanceTests[Int] and DistanceTests[Short]. The reflection
 in scala-test will sweep them up, so that's all the plumbing I will have to do
@@ -139,7 +140,7 @@ In SBT I use the command '~test' quite a lot. This compiles and runs everything 
 {% highlight scala %}
 class DistanceFloatTests extends DistanceTests[Float] { 
     implicit def toD(x: Int) = x.toFloat; 
-    val large = /*whatever we put in the Distance type class */ 
+    val large = /*whatever we put in the Distance[Float] Type Class */ 
 }
 {% endhighlight %}
 
@@ -180,6 +181,16 @@ abstract class MatrixLikeTests[D: Distance, MM](
 abstract class MatrixLikeIntTests[MM](implicit matrixLike: Matrix[Int, MM]) 
                extends MatrixLikeTests[Int, MM] {
   implicit def toD(x: Int) = x;
+  
+  "A mileage matrix" when {
+    "empty" should {
+      "have a zero for same from/to" in {
+        val mm = mf(3, List())
+        mm(0, 0) shouldBe zero
+        ...
+      }
+      ... more tests
+   }
 }
 abstract class MatrixLikeShortTests[MM](implicit matrixLike: Matrix[Short, MM]) 
                extends MatrixLikeTests[Short, MM] {
@@ -297,7 +308,7 @@ anything to large made them overflow, and they became a negative number. In othe
 
 {% highlight scala %}
   "Distance" should "implment addition with large to always return large" in {
-	  distanceLike.add(one, two) shouldBe three
+	  distanceLike.add(large, large) shouldBe large
 	  distanceLike.add(one, large) shouldBe large
 	  distanceLike.add(large, two) shouldBe large
   }
