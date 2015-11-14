@@ -3,7 +3,7 @@ layout: post
 title: "Dealing With Combinatorial Explosions When Unit Testing"
 date:   2015-11-14 08:06:23 +0000
 ---
-My previous post when on scala test with type classes. I showed how an abstract class could be used, and then each concrete instance of the type class could inherit it. This worked really 
+In my previous post when on scala test with type classes, I showed how an abstract class could be used, and then each concrete instance of the type class could inherit it. This worked really 
 well with such things as Distance:
 
 {% highlight scala %}
@@ -28,8 +28,10 @@ abstract class DistanceTests[D: Distance] extends FlatSpec with Matchers {
 
 }
 
-class DistanceIntTests extends DistanceTests[Int] { implicit def toD(x: Int) = x; val large = Int.MaxValue }
-class DistanceShortTests extends DistanceTests[Short] { implicit def toD(x: Int) = x.toShort; val large = Short.MaxValue }
+class DistanceIntTests extends DistanceTests[Int] { 
+   implicit def toD(x: Int) = x; val large = Int.MaxValue }
+class DistanceShortTests extends DistanceTests[Short] { 
+   implicit def toD(x: Int) = x.toShort; val large = Short.MaxValue }
 {% endhighlight %}
 
 However when we moved to more MatrixLike, we needed to instantiate an instance with each concrete class for distance, and each concrete type for the matrix:
@@ -81,7 +83,7 @@ that would require me to implement 42 classes. I would like to find a better way
 work when I add a new Distance, Matrix or MileageFactory, the second is spotting errors of omission. 
 
 #Scala Test Documentation
-A good place to start when messing with test fixtures is the documentation. I started with this http://doc.scalatest.org/1.8/org/scalatest/FlatSpec.html
+A good place to start when messing with test fixtures is the documentation. [I started with this](http://doc.scalatest.org/1.8/org/scalatest/FlatSpec.html)
 
 This lead me to doing the following:
 {% highlight scala %}
@@ -104,7 +106,8 @@ This lead me to doing the following:
   }
 
 
-  val defns = List(DistanceTestDefn("Int", _.toInt, Int.MaxValue), DistanceTestDefn("Short", _.toShort, Short.MaxValue))
+  val defns = List(DistanceTestDefn("Int", _.toInt, Int.MaxValue), 
+                   DistanceTestDefn("Short", _.toShort, Short.MaxValue))
   defns.foreach { defn =>
     s"Distance[${defn.prefix}]" should behave like distance(defn)
   }
@@ -119,10 +122,12 @@ There isn't much saving (actually it's slightly worse code) with Distance, becau
 up programatically. Let's see how that might work. My first attempt didn't work:
 
 {% highlight scala %}
-case class MatrixLikeTestDefn[D, MM](prefix: String, matrix: MM)(implicit val matrixLike: Matrix[D, MM])
+case class MatrixLikeTestDefn[D, MM](prefix: String, matrix: MM)(
+                              implicit val matrixLike: Matrix[D, MM])
 
 class AllMatrixLikeTests extends WordSpec with Matchers {
-  def matrix[D, MM](matrixDefn: MatrixLikeTestDefn[D, MM], distanceDefn: DistanceTestDefn[D]) {
+  def matrix[D, MM](matrixDefn: MatrixLikeTestDefn[D, MM], 
+                    distanceDefn: DistanceTestDefn[D]) {
     import distanceDefn._
     import matrixDefn.matrixLike._
     implicit def toDo(x: Int) = toDFn(x)
@@ -139,7 +144,8 @@ class AllMatrixLikeTests extends WordSpec with Matchers {
       ...other tests
     }
   }
-  val distanceDefns = List(DistanceTestDefn("Int", _.toInt, Int.MaxValue), DistanceTestDefn("Short", _.toShort, Short.MaxValue))
+  val distanceDefns = List(DistanceTestDefn("Int", _.toInt, Int.MaxValue), 
+                           DistanceTestDefn("Short", _.toShort, Short.MaxValue))
   val matrixDefns = List( .... what goes here .... )
   for { d <- distanceDefns; m <- matrixDefns }
     s"Matrix[${d.prefix},${m.prefix}]" should behave like matrix(d, m)
@@ -175,7 +181,8 @@ class AllMatrixLikeTests extends WordSpec with Matchers {
      ..more tests
     }
   }
-  val distanceDefns = List(DistanceTestDefn("Int", _.toInt, Int.MaxValue), DistanceTestDefn("Short", _.toShort, Short.MaxValue))
+  val distanceDefns = List(DistanceTestDefn("Int", _.toInt, Int.MaxValue), 
+                           DistanceTestDefn("Short", _.toShort, Short.MaxValue))
   val matrixDefns = List(
     MatrixTestDefn("Map[(Int, Int), D]", d => Matrix.asMatrix_Map_Tuple_Like(d)),
     MatrixTestDefn("HashMap[(Int, Int), D]", d => Matrix.asMatrix_HashMap_Tuple_Like(d)),
@@ -199,7 +206,8 @@ down to only working with Shorts and Ints respectively.
 
 I now have a choice between
 {% highlight scala %}
-  val distanceDefns = List(DistanceTestDefn("Int", _.toInt, Int.MaxValue), DistanceTestDefn("Short", _.toShort, Short.MaxValue))
+  val distanceDefns = List(DistanceTestDefn("Int", _.toInt, Int.MaxValue), 
+                           DistanceTestDefn("Short", _.toShort, Short.MaxValue))
   val matrixDefns = List(
     MatrixTestDefn("Map[(Int, Int), D]", d => Matrix.asMatrix_Map_Tuple_Like(d)),
     ....
@@ -208,8 +216,12 @@ I now have a choice between
   for { d <- distanceDefns; m <- matrixDefns }
     s"Matrix[${d.prefix},${m.prefix}]" should { behave like matrix(d, m) }
 
-  s"Matrix[Short,JavaShortArrayAndLength}]" should { behave like matrix(distanceDefns(0), MatrixTestDefn("JavaShortArrayAndLength", d => Matrix.MatrixJavaShortArrayAndLengthLike)) }
-  s"Matrix[Int,JavaIntArrayAndLength}]" should { behave like matrix(distanceDefns(1), MatrixTestDefn("JavaIntArrayAndLength", d => Matrix.MatrixJavaIntArrayAndLengthLike)) }
+  s"Matrix[Short,JavaShortArrayAndLength}]" should { 
+          behave like matrix(distanceDefns(0), 
+                 MatrixTestDefn("JavaShortArrayAndLength", d => Matrix.MatrixJavaShortArrayAndLengthLike)) }
+  s"Matrix[Int,JavaIntArrayAndLength}]" should { 
+         behave like matrix(distanceDefns(1), 
+                 MatrixTestDefn("JavaIntArrayAndLength", d => Matrix.MatrixJavaIntArrayAndLengthLike)) }
 {% endhighlight %}
 
 and
