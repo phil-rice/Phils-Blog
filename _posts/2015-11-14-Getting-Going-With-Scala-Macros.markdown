@@ -28,13 +28,13 @@ missed them in Scala and Java. Scala 2.10 introduced them, which made me a lot h
   }
 }
 {% endhighlight %}
-The $a in the string prefixed with an s means 'put the toString of the variable a in the string. The ${<some code>} means evaluate the code and do a toString on the result, and stick that in the string
+The $a in the string prefixed with an s means 'put the toString of the variable a in the string. The ${<some code>} means evaluate the code between the {} and do a toString on the result, and stick that in the string
 
 These are very useful, and I use them a lot. Quasiquotes are an extension of the same code base
 
 #Quasiquotes
 
-I started by following the guide
+I started by following the [guide]( http://docs.scala-lang.org/overviews/quasiquotes/intro.html)
 {% highlight scala %} 
 object QuasiQuotes {
   def main(args: Array[String]): Unit = {
@@ -145,10 +145,10 @@ I then needed to move scala files around. I ended up with the following file str
 scalamacroblog
     macroDefn
        src/main/scala/org/validoc/scalaMacroBlog
-          HelloWorldOldMacro
+          HelloWorldOldMacro.scala
     macroUser
        src/main/scala/org/validoc/scalaMacroBlog
-          HelloWorldOldMacroUser
+          HelloWorldOldMacroUser.scala
 {% endhighlight %}
 File HelloWorldOldMacro looks like
 {% highlight scala%} 
@@ -164,7 +164,7 @@ object HelloWorldOldMacro {
   }
 }
 {% endhighlight %}
-File HelloWorldOldMacroUser looks like this. Importantly there is no perceptable way of seeing that 'hello' is a macro rather than a method
+File HelloWorldOldMacroUser.scala looks like this. Importantly there is no perceptible way of seeing that 'hello' is a macro rather than a method
 {% highlight scala%} 
 object HelloWorldOldMacroUser {
   def main(args: Array[String]): Unit = {
@@ -314,6 +314,7 @@ they pass in a string that is the 'tostring' of the fn. The code 'show(fn.tree)'
 
 #Summary
 
-Macro's are a useful tool. They are a way to do things that you can't otherwise do in a language. I hope this example showed that useful macros don't have to be horribly complicated to write. I use the FunctionalWrapper
-approach quite a lot when trying to produce nice error messages deep inside code: especially with exceptions.
+Macro's are a useful tool. They are a way to do things that you can't otherwise do in a language. I don't know anyother every half reliable way of getting the toString of a function to be realibly
+made from it's abstract syntax tree. I hope this example showed that useful macros don't have to be horribly complicated to write. I use the FunctionalWrapper
+approach quite a lot when trying to produce nice error messages and reports from deep inside code. 
 
