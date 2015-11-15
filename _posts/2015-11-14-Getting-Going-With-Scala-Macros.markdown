@@ -68,7 +68,14 @@ i.am(a.quasiquote)
 What this is, is a pretty printed abstract syntax tree of the code i.am(a.quasiquote). 'i' represents some variable or method or object called i. Similarly with 'a'. The words 'am' and 'quasiquote' are method calls.
 Of course none of these things exist. There are no variables called 'i' and 'a', and they certainly don't have these methods! 
 
-So now we have a way of creating abstract syntax trees, how can we use them in a macro?
+#What is an Abstract Syntax Tree (AST)?
+These words are used a lot in the documentation. In essence they are the domain model for code. If you have a line of code 'if(a) b else c' then this would be modeled as a tree with an if statement
+at the top. That if statement would have a condition, a then and an optional else. The condition in this case is an identifier with the value of the string 'a'. A good summary (as every) 
+[is on wikipedia](https://en.wikipedia.org/wiki/Abstract_syntax_tree) 
+
+One way of thinking of code is as 'a way of describing an abstract syntax tree so the compiler can turn it into byte codes'. What macros let us do is replace one node of the AST with the contents of the macro.
+The macro 'executes' during compile time, and returns a (suitably typed)  AST that is spliced into the rest of the compiled code. One really nice thing about it (perhaps the most useful singlet thing) is
+that the parameter to it are NOT evaluated and passed in. Instead the AST that represents them is passed in. A use for this can be seen in the FunctionalWrapper example below  
 
 #Hello World Macro
 {% highlight scala %} 
@@ -263,7 +270,7 @@ The reason I turned to macros was that I want to have pretty toStrings for my cl
 
 as the toString of (x: Int)=>i*2? I think the answer is obvious
 
-It turns out to be fairly easy to do this:
+It turns out to be fairly easy to do this. As I mentioned before the parameter passed to the macro is not 'evaluated' but instead the AST of it is passed in. Let's look at the following code and see how we can use this
 {% highlight scala%}
 import scala.reflect.macros.blackbox.Context
 import scala.language.experimental.macros
