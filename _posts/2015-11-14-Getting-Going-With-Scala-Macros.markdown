@@ -3,6 +3,9 @@ layout: post
 title: "Getting going with Scala Macros"
 date:   2015-11-14 12:00:23 +0000
 comments: True
+categories:
+- scala
+- macros
 ---
 I've used the macros introduced in Scala 2.10 extensively. Every time I have used them I have ended up with serious pains: they are remarkably hard to reason about, to manipulate and construct. One of the 
 biggest problems for me is the amount of information you need to know about how the compiler works.

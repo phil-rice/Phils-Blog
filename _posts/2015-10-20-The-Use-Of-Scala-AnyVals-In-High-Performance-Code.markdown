@@ -1,8 +1,11 @@
 ---
 layout: post
 title:  "The Use of Scala AnyVals in High Performance Code"
-date:   2015-11-10 08:09:00 +0000
+date:   2015-10-20 08:09:00 +0000
 comments: True
+categories:
+- scala
+- performance
 ---
 #Overview
 I am engaged in a legacy modernisation task on a job that is working out the possible routes that people might of traveled on. The

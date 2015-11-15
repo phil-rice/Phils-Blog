@@ -1,8 +1,11 @@
 ---
 layout: post
 title: "Inserting data to database tables with Scala"
-date:   2015-11-12 12:06:23 +0000
+date:   2015-10-30 12:06:23 +0000
 comments: True
+categories:
+- scala
+- performance
 ---
 I have a file full of JSON data that is about two gigabyte long. I want to import it into a database tables There are actually three types of JSON in the file, and as would be
 expected the schema is very rigid. Each line of the file is a block of JSON and represents a 'Service'.

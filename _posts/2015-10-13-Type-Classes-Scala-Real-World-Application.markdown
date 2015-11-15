@@ -1,8 +1,11 @@
 ---
 layout: post
 title:  "Type Classes in Scala: A Real World Application"
-date:   2015-11-09 11:06:23 +0000
+date:   2015-10-13 11:06:23 +0000
 comments: True
+categories:
+- scala
+- performance
 ---
 
 #Overview
