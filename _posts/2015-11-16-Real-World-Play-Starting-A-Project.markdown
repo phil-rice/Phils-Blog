@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Getting going with Scala Play"
+title: "Real World Play - Starting A Project"
 date:   2015-11-16 12:00:23 +0000
 comments: True
 categories:
@@ -51,7 +51,7 @@ is very straightforwards to download and use. [You can find it here](https://ver
 ##Setting up play activator
 Upgrading from play versions is, I have found, not a trivial thing. I've had to move my primary website from 2.3 to 2.4 and it was rather painful. As 2.5 is now out, I am going to start using that. Making
 a new play application isn't something I do everyday. I've done it maybe a dozen times, all with different versions of Play, and every time I go back to the basics.
-[The scala documentation is here](https://www.playframework.com/documentation/2.5.x/Installing) I tend not to use the activator at all once I've got HelloWorld working, but it's good for this initial phase
+[The scala documentation is here](https://www.playframework.com/documentation/2.4.x/Installing) I tend not to use the activator at all once I've got HelloWorld working, but it's good for this initial phase
 
 * [Download the activator from here](https://typesafe.com/get-started)
 * Extract it onto my encrypted drive
@@ -123,8 +123,6 @@ resolvers += "Scalaz Bintray Repo" at "https://dl.bintray.com/scalaz/releases"  
 libraryDependencies ++= Seq(
   specs2 % Test
 )     
-
-routesGenerator := InjectedRoutesGenerator
 {% endhighlight %}
 
 It turned out that at the end I have to restore the resolvers statement to get Play to deploy successfully on Heroku.
@@ -159,7 +157,6 @@ I laughed when I read this and deleted the file.
 
 {% highlight scala %}
 // This plugin represents functionality that is to be added to sbt in the future
-
 addSbtPlugin("org.scala-sbt" % "sbt-core-next" % "0.1.1")
 {% endhighlight %}
 ### play-fork-run.sbt
@@ -167,7 +164,6 @@ addSbtPlugin("org.scala-sbt" % "sbt-core-next" % "0.1.1")
 This is another file that gives me a nice warm feeling as I delete it
 {% highlight scala %}
 // This plugin adds forked run capabilities to Play projects which is needed for Activator.
-
 addSbtPlugin("com.typesafe.play" % "sbt-fork-run-plugin" % "2.4.3")
 {% endhighlight %}
 
@@ -210,15 +206,14 @@ class PersonController @Inject() (repo: PersonRepository, val messagesApi: Messa
   ...
 {% endhighlight %}
 
-Well some bits are fine. PersonRepository was obviously the link to the model. [I like the messagesApi](https://www.playframework.com/documentation/2.5.x/ScalaI18N). I'm almost certainly going
+Well some bits are fine. PersonRepository was obviously the link to the model. [I like the messagesApi](https://www.playframework.com/documentation/2.4.x/ScalaI18N). I'm almost certainly going
 to be using execution contexts... but I want a simple start. So I edit it to
 {% highlight scala %}
 package controllers
-
 import play.api._
 import play.api.mvc._
 
-class NotaryController extends Controller{
+object NotaryController extends Controller{
   def index = Action {Ok("Hello World") }
 }
 {% endhighlight %}
@@ -250,7 +245,7 @@ GET     /                           controllers.NotaryController.index
 GET     /assets/*file               controllers.Assets.versioned(path="/public", file: Asset)
 {% endhighlight %}
 This a little different from what I was expecting. The 'Assets.versioned' syntax is new to me, so a quite bit of google-fu leads me to a 
-[description of assets on the play framework website](https://www.playframework.com/documentation/2.5.x/Assets) Under the section marked  
+[description of assets on the play framework website](https://www.playframework.com/documentation/2.4.x/Assets) Under the section marked  
 "Reverse routing and fingerprinting for public assets" there is an interesting tidbit
 
 >sbt-web brings the notion of a highly configurable asset pipeline to Play e.g. in your build file:
@@ -279,7 +274,7 @@ Step 2: 'clean' (we need to get rid of any junk lying around from things we have
 Step 3: 'run'
 Step 4: Navigate browser to http://localhost:9000
 
-In my case I got 'Hello World' on the screen! Hurrah we have a Play framework 2.5 application running.
+In my case I got 'Hello World' on the screen! Hurrah we have a Play framework 2.4 application running.
 
 #Get working in IDE
 
@@ -359,6 +354,6 @@ That done though, the application was live and running on the internet.
 
 #Review of where we are
 
-We have a 'Hello World' Play 2.5 application with minimal extra stuff. We are confident that all the version numbers are correct (that was the main point of using the activator) and
+We have a 'Hello World' Play 2.4 application with minimal extra stuff. We are confident that all the version numbers are correct (that was the main point of using the activator) and
 we have a working environment. "sbt run" allows us to  run locally. We can edit the files in our favourite IDE, and deploy easily to Heroku. We have a github repository with the source code
 in it. All in all a healthy place to be.

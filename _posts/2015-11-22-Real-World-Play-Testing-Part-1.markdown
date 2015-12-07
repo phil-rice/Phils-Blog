@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Getting going - Testing Scala Play"
+title: "Real World Play -Testing Part 1"
 date:   2015-11-22 16:00:23 +0000
 comments: True
 categories:
@@ -11,7 +11,7 @@ categories:
 
 This follows the work [started here](/scala/play/2015/11/16/getting-started-with-play.html). 
 
-The code for this can be found here https://github.com/phil-rice/Notary with the tag 'Blog2'
+The code for this can be found here [https://github.com/phil-rice/notary1](https://github.com/phil-rice/notary1)
 
 #Review
 
@@ -20,11 +20,10 @@ very early on is a simple login story. After doing this simple login, we'll look
 
 #Getting started
 
-As we are using Scala Play 2.5, we need to use a suitable testing framework for it. This website https://www.playframework.com/documentation/2.5.x/ScalaFunctionalTestingWithScalaTest 
-recommends using ScalaTest + Play, which can be found here http://www.scalatest.org/plus/play. At the time of writing there wasn't a version that was released for use with 
-Play 2.5. 
+As we are using Scala Play 2.4, we need to use a suitable testing framework for it. This website https://www.playframework.com/documentation/2.5.x/ScalaFunctionalTestingWithScalaTest 
+recommends using ScalaTest + Play, which can be found here http://www.scalatest.org/plus/play.
 
-The following added to the build file seems to work, although I'd rather use an actual released version! 
+The following added to the build file seems to work, although I'd rather use an actual released version (not available at the time of writing) 
 
 {% highlight scala %}
 libraryDependencies ++= Seq(
@@ -39,6 +38,7 @@ them now. There is a saying in IT 'one more layer of indirection solves every pr
 to know about for a simple login story is the username
 
 {% highlight scala %}
+package org.validoc.notary.users
 trait User[A] {
   def userName(a: A): String
 }
@@ -57,7 +57,10 @@ object SimpleUser {
 This test is almost so simple it's 'not worth testing'. Still it doesn't hurt to write it, and it doesn't take long. 
  
 {% highlight scala %}
- class SimpleUserSpec extends PlaySpec with Results {
+package org.validoc.notary.users
+import org.scalatestplus.play.PlaySpec
+import play.api.mvc._
+class SimpleUserSpec extends PlaySpec with Results {
 
   "The Simple User" must {
     "Return the user name" in {
@@ -71,11 +74,16 @@ The test is simple. It's just ensuring that the implicit object is picked up, an
 What is interesting is that before long we are likely to want to test 'User[A]' like behaviour for at least one implementation: 'the real one'. At that point we'll probably use
 the approach in [this discussion](/scala/testing/2015/11/11/dealing-with-combinatorial-explosions-when-unit-testing-type-classes.html) 
 
+This test is our first 'domain model' test. It has nothing to do with Play. 
+
 #Login
  
 Let's make some behaviour that is worth testing.  Play stores session state in encrypted cookies. For our first login story just storing the username in the session state is adequate. Later we will want to put timeouts in it, and perhaps
  strengthen the story in other ways. Again a level of indirection is our friend here. We can put off making these decisions too. The level of indirection helps with tests too
 {% highlight scala %} 
+package controllers
+import play.api.mvc._
+import org.validoc.notary.users.User
 trait LoginControllerTrait[A] {
   self: Controller =>
   implicit val userLike: User[A]
@@ -98,11 +106,15 @@ trait LoginControllerTrait[A] {
 {% endhighlight %}
 
 This is a controller that is abstracted away from all the details of how the login is performed or the webpage with the login details on it. The website is very ugly, 
-but we don't need to worry about that at the moment. At the moment the only way to navigate to the pages is to manually type them in. 
+but we don't need to worry about that at the moment. At the moment the only way to navigate to the pages is to manually type them in. This is more of a 'RESTful service' then a
+website, but we'll improve it with time.  
 
 The UserInRequest represents the ability to extract the username from the web request, and the UserInSession is how the details on the current user are saved in session state (or cookies).
 It is very likely that UserInRequest will be renamed and get bigger as it is all about the authentication. The UserInSession trait might stay like this, even if there become multiple
 implementations.
+
+It would be entirely possible not to have these two abstractions: the code in them could absolutely be put in the controller itself. I like though minimising the work the control has
+to do, and making the controller composed of small things: each doing one job well, rather than being a God object.
 
 {% highlight scala %} 
  trait UserInRequest {
@@ -126,7 +138,6 @@ GET   /login          controllers.LoginController.login
 GET   /logout         controllers.LoginController.logout
 ...
 {% endhighlight %}
-
 
 #Test before Refactoring
 
@@ -230,7 +241,7 @@ class HelloWorldIntegrationTest extends PlaySpec  with OneServerPerSuite
 }
 {% endhighlight %}
 
-I've not had a lot of success with HtmlUnitFactory: especially in code that uses cookies or javascript. The above test worked as it was very simple, but for most uses
+I tend to only use HtmlUnitFactory when I am not using cookies or javascript. The above test worked as it was very simple, but for most uses
 I prefer to use a real browser, as the goal of these tests is to check that the code actually works in a browser. The login story is all about cookie management, so
 unlike most test suites that I write it has OneBrowserPerTest instead of OneBrowserPerSuite. This does add considerably to the execution time, and while for most tests I
 would be happy to just call 'logout' in a beforeTest code, I'm not so keen for that in the Login code itself.
@@ -239,7 +250,7 @@ One thing that is needed with the ChromeFactory is to visit [this page](https://
 put it in the root of the project.
  
 {% highlight scala %}
-class LoginIntegrationTest extends PlaySpec with OneServerPerSuite with OneBrowserPerTest with ChromeFactory {
+class LoginIntegrationSpec  extends PlaySpec with OneServerPerSuite with OneBrowserPerTest with ChromeFactory {
 
   "The login page" must {
     "diplay 'Logged In as" in {
