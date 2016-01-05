@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Scala Iteratees"
-date:   2015-11-28 16:00:23 +0000
+date:   2015-12-28 16:00:23 +0000
 comments: True
 categories:
 - scala
