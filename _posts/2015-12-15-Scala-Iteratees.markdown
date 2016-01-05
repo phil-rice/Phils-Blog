@@ -8,6 +8,9 @@ categories:
 - play
 ---
 
+#Code
+The code can be found at [Github](https://github.com/phil-rice/IterateesBlog).
+
 #The problem that Iteratees are solving
 I've been using iterators (not iteratees) what feels like forever. They have a number of issues, which mean that every now and then I have to use clunky things like 'break', or just 'roll my own'. One of the classical issues
 is what I used to call [the N and a half loop](http://rosettacode.org/wiki/Loops/N_plus_one_half)  This is where you are looking through a list of things, often doing something as you go, until you find the thing you are looking for.
