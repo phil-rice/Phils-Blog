@@ -14,6 +14,8 @@ The code I was replacing did all this single threaded: It received the list, the
 
 This is clearly suboptimal: the thread that executes this is blocking almost all the town waiting for the next webpage or the next image, and in fact this process ran very poorly
 
+The code in this blog can be found in https://github.com/phil-rice/futures 
+
 #Goals
 * I don't want to have to worry about how I implement the webpage or image. In fact this isn't really about webpages and images, it's about items and children
 * I don't want to tie myself down to a particular mechanism for loading webpages or images
