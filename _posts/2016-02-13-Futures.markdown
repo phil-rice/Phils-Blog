@@ -9,6 +9,7 @@ categories:
 ---
 
 #Overview
+
 I found myself in the position where I had to fetch a list of web pages, and then get all those images on that web page. The resulting bundle would be sent to a third party.
 The code I was replacing did all this single threaded: It received the list, then for each item in the list it went to get the list. For each webpage it then went and got the images.
 
@@ -17,6 +18,7 @@ This is clearly suboptimal: the thread that executes this is blocking almost all
 The code in this blog can be found in https://github.com/phil-rice/futures 
 
 #Goals
+
 * I don't want to have to worry about how I implement the webpage or image. In fact this isn't really about webpages and images, it's about items and children
 * I don't want to tie myself down to a particular mechanism for loading webpages or images
 * I'd like the code to be non blocking to (for example) tie into web frameworks like Finatra or Play
@@ -24,11 +26,13 @@ The code in this blog can be found in https://github.com/phil-rice/futures
 * It is entirely possible that loading a webpage or it's images will cause exceptions: these should be reported
 
 #Approach
+
 While I came up this solution from 'test first' that's quite hard to describe in a narrative way, so I'm describing the final implementation and then discussing how to test it afterwards. While
 I think it is effectively impossible to properly test multithreaded code, very little of the code in this blog needs to worry about that. The heavy lifting is done by the scala Futures and the
 implementers of the web services. This code is just about aggregating the results of those.
 
-#End code
+#End Code
+
 I want the end code to look a little like this (assuming WebPage and Image are the names of the classes that hold the Webpage and the image.
 
 {% highlight scala %}
@@ -48,6 +52,7 @@ In this code sample LoadItemsAndChildren is a trait that does what it says on th
 loadItemsAndChildren is going to return a Future of a class that holds the successes and failures.
 
 #Webpages and Items
+
 Rather that work with real webpage DOMs and image representations, which are messy and complicated and more: we probably don't have control of the source code for them, let's use some type classes to describe the
 attributes we want. It turns out that actually the only interesting feature on a webpage is 'how do I find the ids of the images', and the images have effectively no interesting properties. 
 The ChildIds type class captures this idea
@@ -71,6 +76,7 @@ We can demonstrate how this would be used with the mock webpage and images that 
 {% endhighlight %}
 
 #Loading items
+
 Let's start at the beginning and work out how we are going to load web pages and images. Probably a very similar mechanism for both will be used: a web service call followed by a 
 transformation of the result of the call into a suitable object. Since the implementation of that will be messy and complicated we don't really want to tie this code to the mechanism. Type classes are a very powerful tool for this decoupling.
 
@@ -97,6 +103,7 @@ If we apply this to the Webpage and images we were using before, we could implem
 These load methods in practice could be the Play webservice client library, or something like the Finagle http client library.
 
 #Loading a webpage and its images
+
 The requirement for this work says that after the item is loaded, the images should be loaded. As observed above this is really more about an 'item' and its 'children'. Given the assumption that
 the IdToItem implementations do the heavy lifting (a valid assumption with both the Play and Finatra/Finagle frameworks) then all that is required is to orchestrate them. Let's start with just loading the children
 having loaded an item.
@@ -132,6 +139,7 @@ trait LoadItemsAndChildren  {
 By forcing the result of loadChildren to be a Future[List[C]], the compiler uses the implicit method flattenSeq. That method uses the very useful fold method on future
 
 #Loading an item and it's children
+
 So we now have a way of loading items, and a way of going from an item to its children. Let's add a method to loadItemAndChildren that will return a Future of the item and its children:
 {% highlight scala %}
 trait LoadItemsAndChildren  {
@@ -152,12 +160,14 @@ Because we want to return a tuple of the item and its children, we call
 map on the future that loadChildren returns, and map the children returns to the tuple (item,children)
 
 #Review
+
 Let's see how this works. It's actually pretty much exactly as we would want to describe it. An item (a webpage) is requested. When that item returns, separate calls are sent out for that items children (images). When
 all of those have returned, the future is complete and the value can be retreived from it. Should any of those calls to get the item or its children 'go wrong' (i.e. throw an exception) then the whole future will
 end with that exception. This is actually the desired behaviour in this system: the webpage needs to be packaged with its images, and if there is an exception it should be logged but the webpage not passed on to the
 third party
 
 #Loading multiple items
+
 Well here we have to think about exceptions again. If one item fails we want to know which one it was, and what the exception was. If it succeeded we want three things: the id, the item and its children.
 
 This isn't quite the normal future aggregation story. Normally if we have several futures we are folding together if there are any exceptions the whole thing fails. So that means we probably need to add
@@ -211,10 +221,12 @@ trait LoadItemsAndChildren {
 {% endhighlight %}
 
 #Review
+
 And that's mostly it. We can now call loadItemsAndChildren on a sequence of Ids, and get back a Future of a SuccessAndFailureList. The SuccessAndFailureList has (as the name suggests)
 two lists: one for the successes that holds the Id, Item and Children, and one for the failures that holds the Id and the exception that was thrown.
 
 #Tests
+
 The really nice thing about this sort of code is that it's actually easy to test. There are no sideeffects to worry about as long as the IdToItem and ChildIds are clean.
  
 The tests I wrote look like this
@@ -322,6 +334,7 @@ implicits for those type classes, I just made this a separate test class. The te
 Those could easily be put into two tests, and in fact after code reviewing it (writing this blog) I would do just that. 
 
 #Summary
+
 That is not actually much code for a lot of functionality and a dramatic speed up. If each web round trip takes a tenth of a second, there are ten pages, and each has ten images, then in the single
 threaded world this would take ten seconds. In this approach it takes around quarter of a second: a dramatic speed up. In addition the error handling is very nice: all the webpages that pass
 are in one list, and all the webpages and the exceptions they threw are in a second list. There are no retry polices in this code: that would be handled at the next level
