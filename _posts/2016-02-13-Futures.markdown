@@ -8,7 +8,7 @@ categories:
 - performance
 ---
 
-#Overview
+# Overview
 
 I found myself in the position where I had to fetch a list of web pages, and then get all those images on that web page. The resulting bundle would be sent to a third party.
 The code I was replacing did all this single threaded: It received the list, then for each item in the list it went to get the list. For each webpage it then went and got the images.
@@ -17,7 +17,7 @@ This is clearly suboptimal: the thread that executes this is blocking almost all
 
 The code in this blog can be found in https://github.com/phil-rice/futures 
 
-#Goals
+# Goals
 
 * I don't want to have to worry about how I implement the webpage or image. In fact this isn't really about webpages and images, it's about items and children
 * I don't want to tie myself down to a particular mechanism for loading webpages or images
