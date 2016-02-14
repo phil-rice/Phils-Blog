@@ -300,9 +300,9 @@ is that you could have a case class with two fields: item and children. In the e
 {% highlight scala %}
   "the LoadItemsAndChildren method loadItemsAndChildren" should "load multiple webpages and their  children, putting results in a SuccessAndFailureList" in {
     import LoadItemsAndChildren._
-    val SuccessAndFailureList(successes, failures) = fromFuture(loadItemsAndChildren[WebPage, Image](List("ida", "idb", "idc")))
-    successes shouldBe List(("ida", pageaAndChildren), ("idb", pagebAndChildren), ("idc", pagecAndChildren))
-    failures shouldBe List()
+       val SuccessAndFailureSeq(successes, failures) = fromFuture(loadItemsAndChildren[WebPage, Image](List("ida", "idb", "idc")))
+       successes shouldBe Seq(("ida", pageaAndChildren), ("idb", pagebAndChildren), ("idc", pagecAndChildren))
+       failures shouldBe Seq()
   }
 }
 {% endhighlight %}
