@@ -1,0 +1,329 @@
+---
+layout: post
+title: "Futures"
+date:   2016-02-13 16:00:23 +0000
+comments: True
+categories:
+- scala
+- performance
+---
+
+#Overview
+I found myself in the position where I had to fetch a list of web pages, and then get all those images on that web page. The resulting bundle would be sent to a third party.
+The code I was replacing did all this single threaded: It received the list, then for each item in the list it went to get the list. For each webpage it then went and got the images.
+
+This is clearly suboptimal: the thread that executes this is blocking almost all the town waiting for the next webpage or the next image, and in fact this process ran very poorly
+
+#Goals
+* I don't want to have to worry about how I implement the webpage or image. In fact this isn't really about webpages and images, it's about items and children
+* I don't want to tie myself down to a particular mechanism for loading webpages or images
+* I'd like the code to be non blocking to (for example) tie into web frameworks like Finatra or Play
+* I'd like the code to have no side effects (other than getting the webpage from outside) and be easy to test
+* It is entirely possible that loading a webpage or it's images will cause exceptions: these should be reported
+
+#Approach
+While I came up this solution from 'test first' that's quite hard to describe in a narrative way, so I'm describing the final implementation and then discussing how to test it afterwards. While
+I think it is effectively impossible to properly test multithreaded code, very little of the code in this blog needs to worry about that. The heavy lifting is done by the scala Futures and the
+implementers of the web services. This code is just about aggregating the results of those.
+
+#End code
+I want the end code to look a little like this (assuming WebPage and Image are the names of the classes that hold the Webpage and the image.
+
+{% highlight scala %}
+object TryIt extends LoadItemsAndChildren {
+  def main(args: Array[String]) {
+    val (webpage, images) = Await.result(
+                              loadItemAndChildren[WebPage, Image]("id1"), 5 seconds)
+    println("id1 ==> " + item + " ==> " + children.mkString(","))
+
+    println(Await.result(
+         loadItemsAndChildren[WebPage, Image](List("id1", "id2", "id3")), 5 seconds))
+  }
+}
+{% endhighlight %}
+
+In this code sample LoadItemsAndChildren is a trait that does what it says on the tin. LoadItemAndChildren will return a Future of a tuple of the webpage and it's children. The method
+loadItemsAndChildren is going to return a Future of a class that holds the successes and failures.
+
+#Webpages and Items
+Rather that work with real webpage DOMs and image representations, which are messy and complicated and more: we probably don't have control of the source code for them, let's use some type classes to describe the
+attributes we want. It turns out that actually the only interesting feature on a webpage is 'how do I find the ids of the images', and the images have effectively no interesting properties. 
+The ChildIds type class captures this idea
+
+{% highlight scala %}
+trait ChildIds[T] {
+  def getChildIds(t: T): Seq[String]
+}
+{% endhighlight %}
+
+We can demonstrate how this would be used with the mock webpage and images that we'll be using in tests:
+
+{% highlight scala %}
+  case class WebPage(imageUrls: List[String])
+  case class Image(id: String)
+
+  implicit object WebpageAdapter extends  ChildIds[WebPage] {
+    def getChildIds(t: WebPage) = t.imageUrls
+  }
+
+{% endhighlight %}
+
+#Loading items
+Let's start at the beginning and work out how we are going to load web pages and images. Probably a very similar mechanism for both will be used: a web service call followed by a 
+transformation of the result of the call into a suitable object. Since the implementation of that will be messy and complicated we don't really want to tie this code to the mechanism. Type classes are a very powerful tool for this decoupling.
+
+A suitable type class for this would be
+{% highlight scala %}
+trait IdToItem[T] {
+  def load(id: String): Future[T]
+}
+{% endhighlight %}
+
+If we apply this to the Webpage and images we were using before, we could implement them as followed
+
+{% highlight scala %}
+  implicit object WebpageAdapter extends IdToItem[WebPage] with ChildIds[WebPage] {
+    def load(id: String) = ??? //Go and get the web page from the internet and turn it into our class WebPage
+    def getChildIds(t: WebPage) = t.imageUrls
+  }
+
+  implicit object ImageAdapter extends IdToItem[Image] {
+    def load(id: String): Future[Image] = ??? //Go and get the image from the internet
+  }
+{% endhighlight %}
+
+These load methods in practice could be the Play webservice client library, or something like the Finagle http client library.
+
+#Loading a webpage and its images
+The requirement for this work says that after the item is loaded, the images should be loaded. As observed above this is really more about an 'item' and its 'children'. Given the assumption that
+the IdToItem implementations do the heavy lifting (a valid assumption with both the Play and Finatra/Finagle frameworks) then all that is required is to orchestrate them. Let's start with just loading the children
+having loaded an item.
+
+{% highlight scala %}
+trait LoadItemsAndChildren  {
+  def loadChildren[T: ChildIds, C: IdToItem](t: T)(implicit ec: ExecutionContext) =
+    implicitly[ChildIds[T]].getChildIds(t).map(cId=>implicitly[IdToItem[C]].load(cId))
+}
+{% endhighlight %}
+
+The signature for loadChildren is for a T (which in practice will be the web page) and a C (stands for child, which in practice would be the image). The notation T:ChildIds in the generic square brackets means that there must be an implicit ChildIds[T] in the current scope. The
+ object WebpageAdapter in the above code sample would meet that requirement for WebPage. The main problem with this method is that it returns a List[Future[C]]. That's sort of OK, but we really want a 
+ Future[List[C]]. i.e. we want a future that will hold all the children. Fortunately there is a method on the Future companion obeject that does this
+
+{% highlight scala %}
+object FutureHelpers {
+  implicit def flattenSeq[T](f: Seq[Future[T]])(implicit ec: ExecutionContext):
+                                                           Future[List[T]] =
+     Future.fold(f)(List[T]())((acc, c) => c :: acc)
+}
+
+trait LoadItemsAndChildren  {
+  import FutureHelpers._
+    def loadChildren[T: ChildIds, C: IdToItem](t: T)(
+                     implicit ec: ExecutionContext): Future[Seq[C]] =
+      Future.sequence(
+          implicitly[ChildIds[T]].getChildIds(t).
+                       map(cId => implicitly[IdToItem[C]].load(cId)))
+}
+{% endhighlight %}
+
+By forcing the result of loadChildren to be a Future[List[C]], the compiler uses the implicit method flattenSeq. That method uses the very useful fold method on future
+
+#Loading an item and it's children
+So we now have a way of loading items, and a way of going from an item to its children. Let's add a method to loadItemAndChildren that will return a Future of the item and its children:
+{% highlight scala %}
+trait LoadItemsAndChildren  {
+  def loadChildren...
+  def loadItemAndChildren[T: IdToItem : ChildIds, C: IdToItem](id: String)(
+                              implicit ec: ExecutionContext): Future[(T, List[C])] =
+    implicitly[IdToItem[T]].load(id).
+                              flatMap { item => loadChildren[T, C](item).
+                                                   map(children => (item, children)) }
+}
+{% endhighlight %}
+So while that is very succinct it is also very powerful. It's a good idea to rip this code apart and see what is going. The code starts by using the type class IdToItem[T] to load the webpage using the id. This returns
+a future of that webpage. With a future you can call map on it to 'do something' to the item that the future will return. If however that code returns another future (like loadChildren) then we would end up with a
+Future[Future[something]] which is just mindbending and messy. If we use flatmap we end up with a Future[something] which is much easier to understand and work with
+
+Inside that flatmap we have the 'item', which in practice will be the webpage, and we load the children of that item (returning a Future[List[C]]).
+Because we want to return a tuple of the item and its children, we call
+map on the future that loadChildren returns, and map the children returns to the tuple (item,children)
+
+#Review
+Let's see how this works. It's actually pretty much exactly as we would want to describe it. An item (a webpage) is requested. When that item returns, separate calls are sent out for that items children (images). When
+all of those have returned, the future is complete and the value can be retreived from it. Should any of those calls to get the item or its children 'go wrong' (i.e. throw an exception) then the whole future will
+end with that exception. This is actually the desired behaviour in this system: the webpage needs to be packaged with its images, and if there is an exception it should be logged but the webpage not passed on to the
+third party
+
+#Loading multiple items
+Well here we have to think about exceptions again. If one item fails we want to know which one it was, and what the exception was. If it succeeded we want three things: the id, the item and its children.
+
+This isn't quite the normal future aggregation story. Normally if we have several futures we are folding together if there are any exceptions the whole thing fails. So that means we probably need to add
+a little infrastructure.
+
+Let's add the idea of SuccessAndFailureSeq. The only real win of this over a tuple is the 'toString', and clarity. Both advantages worth having:
+{% highlight scala %}
+case class SuccessAndFailureSeq[T](success: Seq[(String, T)] = Seq(), failures: Seq[(String, Throwable)] = Seq()) {
+  def withSuccess(id: String, t: T): SuccessAndFailureSeq[T] = copy(success = success :+(id, t))
+
+  def withFailure(id: String, t: Throwable): SuccessAndFailureSeq[T] = copy(failures = failures :+(id, t))
+}
+{% endhighlight %}
+
+Now it's easy to take some ids and turn them into futures of item and children:
+{% highlight scala %}
+trait LoadItemsAndChildren {
+   def loadItemsAndChildren[T: IdToItem : ChildIds, C: IdToItem](ids: Seq[String])(
+                              implicit ec: ExecutionContext):
+                                 Seq[(String, Future[(T,List[C]])] =    
+       ids.map(id => (id, loadItemAndChildren[T, C](id)))
+{% endhighlight %}
+But ... and it's a big but ... This gives us a Seq[(String, Future[(T,List[C]])], which is a bit of mouthful. Each item in the Seq is an id (the String) and the future which will allow us to get the webpage
+and its children. It would be much nicer to turn this into a Future[SuccessAndFailureSeq[(T,List[C])]. Again this has nothing to do with items and children. It can be done in FutureHelpers:
+{% highlight scala %}
+object FutureHelpers {
+  def partition[T](f: Seq[(String, Future[T])])(implicit ec: ExecutionContext)=
+    f.foldLeft(Future(SuccessAndFailureSeq[T]())) {
+      case (futureAcc, (id, futureT)) => 
+           futureAcc.flatMap { acc => 
+                futureT.map(t => acc.withSuccess(id, t)).
+                        recover { case t => acc.withFailure(id, t) }
+      }
+    }
+}
+{% endhighlight %}
+Now this is quite nice. We fold over the parameter. Our accumulator is a Future[SuccessAndFailureSeq[T]]. The case statement makes this clear: "case (futureAcc, (id, futureT))"
+We could use map to manipulate the 'contents' of the future. However we are going to be returning a future, and as before to avoid Future[Future[...]] we use flatmap.
+
+Inside the "flatMap{acc =>" the variable acc is the SuccessAndFailureSeq so far. The .map method on futureT is called if the future is successful and will add to the accumulator. The recover method is called if the
+future fails, and will add to the failed list
+
+To use this we just change the type  of loadItemsAndChildren in the LoadItemsAndChildren trait, and the compiler will use our partition method
+
+{% highlight scala %}
+trait LoadItemsAndChildren {
+    def loadItemsAndChildren[T: IdToItem : ChildIds, C: IdToItem](ids: Seq[String])(
+             implicit ec: ExecutionContext): Future[SuccessAndFailureSeq[(T, Seq[C])]] =
+      FutureHelpers.partition(ids.map(id => (id, loadItemAndChildren[T, C](id))))
+}
+{% endhighlight %}
+
+#Review
+And that's mostly it. We can now call loadItemsAndChildren on a sequence of Ids, and get back a Future of a SuccessAndFailureList. The SuccessAndFailureList has (as the name suggests)
+two lists: one for the successes that holds the Id, Item and Children, and one for the failures that holds the Id and the exception that was thrown.
+
+#Tests
+The really nice thing about this sort of code is that it's actually easy to test. There are no sideeffects to worry about as long as the IdToItem and ChildIds are clean.
+ 
+The tests I wrote look like this
+{% highlight scala %}
+trait FutureSpec extends FlatSpec with Matchers {
+  case class WebPage(imageUrls: List[String])
+  case class Image(id: String)
+  object DummyWebPageAndImageAdapters {
+    import ExecutionContext.Implicits.global
+    implicit object WebpageAdapter extends IdToItem[WebPage] with ChildIds[WebPage] {
+      def load(id: String) = Future(WebPage(List(id + "_1", id + "_2")))
+      def getChildIds(t: WebPage) = t.imageUrls
+    }
+
+    implicit object ImageAdapter extends IdToItem[Image] {
+      def load(id: String): Future[Image] = Future(Image(id))
+    }
+  }
+  {% endhighlight %}
+  This defines the dummy Webpage and Image classes that the tests will use, and the types classes that are needed for them to work. It also 
+  {% highlight scala %}
+  def fromFuture[T](f: Future[T]) = Await.result(f, 5 seconds)
+{% endhighlight %}
+Most of the assertions will be about things that are in futures, this makes it easy to get at the contents of the future. Five seconds is the same as 'forever' as
+in these tests the futures are not actually doing asynchronous things
+{% highlight scala %}
+  
+  val pageaAndChildren = (WebPage(List("ida_1", "ida_2")), List(Image("ida_1"), Image("ida_2")).reverse)
+  val pagebAndChildren = (WebPage(List("idb_1", "idb_2")), List(Image("idb_1"), Image("idb_2")).reverse)
+  val pagecAndChildren = (WebPage(List("idc_1", "idc_2")), List(Image("idc_1"), Image("idc_2")).reverse)
+  val pagedAndChildren = (WebPage(List("idd_1", "idd_2")), List(Image("idd_1"), Image("idd_2")).reverse)
+}
+{% endhighlight %}
+A set of values that are used in the tests about loading children.  
+{% highlight scala %}
+  
+class LoadItemsAndChildrenGetSpec extends FutureSpec {
+  import DummyWebPageAndImageAdapters._
+  import ExecutionContext.Implicits.global
+  val someWebpage = WebPage(List("someId_1", "someId_2"))
+
+  "The Dummy Webpage loadItem TypeClass" should "load a webpage with two image ids that are based off the id" in {
+    fromFuture(WebpageAdapter.load("someId")) shouldBesomeWebpage
+  }
+  it should "return those childIds" in {
+    import WebpageAdapter._
+    getChildIds(someWebpage) shouldBe List("someId_1", "someId_2")
+  }
+  "The Dummy Image loadItem TypeClass" should "load an image with the given Id" in {
+    fromFuture(ImageAdapter.load("someId")) shouldBe Image("someId")
+  }
+{% endhighlight %}
+These three tests are actually checking the type classes for the dummy WebPage and Image classes actually work as they should. There is an argument 
+that they don't need testing, but if they go wrong lots of tests will fail, and this is a good place to assert that they actually work.
+{% highlight scala %}
+  "the LoadItemsAndChildren method loadChildren" should "load the children of a webpage" in {
+    import LoadItemsAndChildren._
+    fromFuture(loadChildren[WebPage, Image](someWebpage)) shouldBe List(Image("someId_1"), Image("someId_2"))
+  }
+{% endhighlight %}
+The loadChildren method is checked here. No surprises: it's pretty simple
+{% highlight scala %}
+  "the LoadItemsAndChildren method loadItemAndChildren" should "load the webpage and its  children" in {
+    import LoadItemsAndChildren._
+    fromFuture(loadItemAndChildren[WebPage, Image]("id")) shouldBe
+       (WebPage(List("id_1", "id_2")), List(Image("id_1"), Image("id_2")))
+  }
+{% endhighlight %}
+This test when it was written actually caused a lot of thought. What should the class representing an item an its children be? One argument is that the item should hold its children directly. Another
+is that you could have a case class with two fields: item and children. In the end I went with the simplest thing: a tuple
+{% highlight scala %}
+  "the LoadItemsAndChildren method loadItemsAndChildren" should "load multiple webpages and their  children, putting results in a SuccessAndFailureList" in {
+    import LoadItemsAndChildren._
+    val SuccessAndFailureList(successes, failures) = fromFuture(loadItemsAndChildren[WebPage, Image](List("ida", "idb", "idc")))
+    successes shouldBe List(("ida", pageaAndChildren), ("idb", pagebAndChildren), ("idc", pagecAndChildren))
+    failures shouldBe List()
+  }
+}
+{% endhighlight %}
+This is the 'rosy view' test of loadItemsAndChildren: the main method that we are concerned about. It loads them, then all the 'good ones': i.e. ones that
+didn't throw exceptions, are in one list. The others are in the failures. Like the previous test this causes a lot of thought about data structurse, but again the simplest
+datastructures are sometimes the best: we can always refactor later if it becomes necessary
+{% highlight scala %}
+class LoadItemsAndChildrenGetWithExceptionsSpec extends FutureSpec {
+  import ExecutionContext.Implicits.global
+  implicit object WebpageAdapter extends IdToItem[WebPage] with ChildIds[WebPage] {
+    def load(id: String) = if (id == "idb") Future.failed(new RuntimeException(s"Webpage: $id")) else Future(WebPage(List(id + "_1", id + "_2")))
+    def getChildIds(t: WebPage) = t.imageUrls
+  }
+  implicit object ImageAdapter extends IdToItem[Image] {
+    def load(id: String): Future[Image] = if (id == "idc_1") Future.failed(new RuntimeException(s"Image: $id")) else Future(Image(id))
+  }
+
+  "the LoadItemsAndChildren method loadItemsAndChildren" should "separate successes and failures when exception thrown loading webpage" in {
+    import LoadItemsAndChildren._
+    val SuccessAndFailureList(successes, failures) = fromFuture(loadItemsAndChildren[WebPage, Image](List("ida", "idb", "idc", "idd")))
+    successes shouldBe List(("ida", pageaAndChildren), ("idd", pagedAndChildren))
+    failures.map(_._1) shouldBe List("idb", "idc")
+    failures.map(_._2.getMessage) shouldBe List("Webpage: idb", "Image: idc_1")
+  }
+}
+{% endhighlight %}
+To test the exceptions I made type classes that model throwing exceptions when specific ids are presented to them. Because the previous tests all had
+implicits for those type classes, I just made this a separate test class. The tests check exceptions thrown in loading the webpage and loading images. 
+Those could easily be put into two tests, and in fact after code reviewing it (writing this blog) I would do just that. 
+
+#Summary
+That is not actually much code for a lot of functionality and a dramatic speed up. If each web round trip takes a tenth of a second, there are ten pages, and each has ten images, then in the single
+threaded world this would take ten seconds. In this approach it takes around quarter of a second: a dramatic speed up. In addition the error handling is very nice: all the webpages that pass
+are in one list, and all the webpages and the exceptions they threw are in a second list. There are no retry polices in this code: that would be handled at the next level
+
+I found it fairly straightforwards to write and reason about. Once you accept that the future is a 'box' around a value, and that map takes the item out of the box, does something to it and puts it back in the box, 
+a lot of reasoning becomes simple. Flat map says if I get something out of the box, do something with it that returns a new box around a value, then I throw away the original box and keep the new one. There
+was a little 'messing around': the changing of List[Future[X]] to a Future[List[X]] for example, but the Future library has tools for doing that for you 

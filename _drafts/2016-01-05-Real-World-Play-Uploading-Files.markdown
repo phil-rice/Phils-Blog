@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "Real World Play - Uploading files"
-date:   2015-11-28 16:00:23 +0000
+date:   2016-01-05 16:00:23 +0000
 comments: True
 categories:
 - scala
@@ -48,18 +48,20 @@ This for me is like reading a statement in a mathematical proof 'clear it can be
 files, and plenty of downsides (disc access, resources consumed...) 
 
 ## Iteratees
-Understanding these turned out to be important. They are actually (like most things when you get them) quite simple. [This blog covers why you want them, and why they are a good idea, in some detail](https://jazzy.id.au/2012/11/06/iteratees_for_imperative_programmers.html)
-[The Scala play documentation is quite helpful if you just want to work with them](https://www.playframework.com/documentation/2.4.x/Iteratees).
+Understanding these turned out to be important. They are actually (like most things when you get them) quite simple. [This blog covers why you want them](https://jazzy.id.au/2012/11/06/iteratees_for_imperative_programmers.html)
+[The Scala play documentation is quite helpful if you just want to work with them](https://www.playframework.com/documentation/2.4.x/Iteratees). [I've written about Iteratees in general](http://phil-rice.github.io/scala/play/2015/12/28/Scala-Iteratees.html) 
+but now we are going to have to use them for real
 
 ##Body Parser
 So this documentation on [Body
 N1Parsers](https://www.playframework.com/documentation/2.4.x/ScalaBodyParsers) was 
-useful to explain what was meant by a body parser, but not great in expressing how to write one. [That task was met for me by this](http://manuel.bernhardt.io/2013/10/21/reactive-golf-or-iteratees-and-all-that-stuff-in-practice-part-2/)
+useful to explain what was meant by a body parser, but not great in expressing how to write one. 
 
 
 
 #Getting going using temporary files
-Although I said we aren't going to use temporary files, and are going to make our 
+Although I said we aren't going to use temporary files, and are going to make our
+{% highlight scala %}
     /**
      * Store the body content into a temporary file.
      */
@@ -69,3 +71,4 @@ Although I said we aren't going to use temporary files, and are going to make ou
         file(tempFile.file)(request).map(_ => Right(tempFile))(play.api.libs.iteratee.Execution.trampoline)
       }(play.core.Execution.internalContext))
     }
+{%endhighlight%}

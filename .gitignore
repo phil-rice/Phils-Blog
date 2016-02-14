@@ -1,3 +1,14 @@
-_site
-.sass-cache
-.jekyll-metadata
+logs
+target
+.idea/
+_site/
+/.sass-cache
+/.idea_modules
+/**/.classpath
+/**/.project
+.settings/
+/RUNNING_PID
+bin/
+.cache-main
+.cache-tests
+.sbtserver/
