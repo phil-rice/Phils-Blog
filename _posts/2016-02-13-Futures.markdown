@@ -91,7 +91,7 @@ If we apply this to the Webpage and images we were using before, we could implem
 
 {% highlight scala %}
   implicit object WebpageAdapter extends IdToItem[WebPage] with ChildIds[WebPage] {
-    def load(id: String) = ??? //Go and get the web page from the internet and turn it into our class WebPage
+    def load(id: String) = ??? //Go and get the web page from the internet
     def getChildIds(t: WebPage) = t.imageUrls
   }
 
@@ -135,8 +135,6 @@ trait LoadItemsAndChildren  {
                        map(cId => implicitly[IdToItem[C]].load(cId)))
 }
 {% endhighlight %}
-
-By forcing the result of loadChildren to be a Future[List[C]], the compiler uses the implicit method flattenSeq. That method uses the very useful fold method on future
 
 # Loading an item and it's children
 
