@@ -22,7 +22,7 @@ at and considered using where JRecord and CB2Java. A little playing with them, a
 written a Cobol Copy Book to Java class converter in the past, and knew that I needed to only do a small part of the work for these specific files.
 
 What I wanted to do was to take the opportunity to learn how to use the same style of programming that Scala Play gives us with the JSON library. Here is the raw copy book description
-for the data about a loction
+for the data about a railway station
 {% highlight cobol %}
        01  STNS-REC.                                                    00002001
            05  LOC-LOC                  PIC 9(04).                      00003001
@@ -91,13 +91,14 @@ it isn't (quite) as readable as the annotations, but the flexibility and ability
 
 ## How does Play do this?
 The answer is by heavy use of implicits and type classes. The most important trait is the `FunctionalCanBuild[M[_]]` trait. I have to admit to having spent a number of hours 
-scratching my head and working on code before I "got it".  Let's look at how we can use it. The answer is 'really easily'. I have to tell the framework how to compose objects
-together, and that's about it.
+scratching my head and working on code before I "got it".  Let's look at how we can use it. The answer is 'really easily'. I have to tell the framework how to compose things
+together, and that's about it. We'll look at that after we look at how to make the things we will be composing
 
 ## The simple CopyBookReaders
 Firstly we need a thing that is going to be the basic building block we are going to build. For the moment we don't need to worry what the CopyBookStream is, other than the fact that a CopyBookReader[X] will 
-take one and produce a result of type X. In bad old mutable programming style the stream is in fact a mutable stream... But we will ignore that too! The methods on this are
+take one and produce a result of type X. In bad old mutable programming style the stream is in fact a mutable stream... But we will ignore that too. The methods on this are
 unimportant for the framework until we come to the one place where we worry about how to wire things together.
+
 {% highlight scala %}
 trait CopyBookReader[X] {
   def apply(implicit copyBookStream: CopyBookStream): X
@@ -122,10 +123,7 @@ trait FixedLengthCopyBookReader[X] extends CopyBookReader[X] {
   val default: X
   def apply(implicit copyBookStream: CopyBookStream): X = {
     val bytes = copyBookStream.read(buffer)
-    if (copyBookStream.hasMoreData)
-      reads(buffer)
-    else
-      default
+    if (copyBookStream.hasMoreData) reads(buffer) else default
   }
   def reads(bytes: Array[Byte]): X
   def length: Int
@@ -134,8 +132,7 @@ trait FixedLengthCopyBookReader[X] extends CopyBookReader[X] {
 case class NumCopyBookReader[X](length: Int) extends FixedLengthCopyBookReader[Int] {
   val default = 0
   def reads(bytes: Array[Byte]) = {
-    val result = bytes.foldLeft(0)((acc, v) =>
-      acc * 10 + (v & 0x0f))
+    val result = bytes.foldLeft(0)((acc, v) => acc * 10 + (v & 0x0f))
     result
   }
 }
@@ -152,16 +149,14 @@ case class CompCopyBookReader[X](compLength: Int)
   lazy val length = compLength / 2
   if (length % 2 != 0) throw new RuntimeException("Not supported")
   val default = 0
-  def reads(bytes: Array[Byte]) = {
-    val result = bytes.foldLeft(0)((acc, v) => acc * 256 + (v & 0xff))
-    result
-  }
+  def reads(bytes: Array[Byte]) =  bytes.foldLeft(0)((acc, v) => acc * 256 + (v & 0xff))
+
 }
 {% endhighlight %}
 
 ## Composing the CopyBookReaders
 Now that I have my building blocks, I have to tell the Functional building framework how to build it. This will let us use the lovely 'and' notation
-that we saw in our earlier code samples.
+that we saw in our earlier code samples from Play Json
 
 {% highlight scala %}
 object CopyBookReader {
@@ -180,7 +175,7 @@ object CopyBookReader {
 and... that's it. This is the one place that tells us how to wire things together. The Play framework does the rest of the heavy lifting. The code in the apply method is a 
 little odd with class names like '~', but all it actually does is say if that if you have two copy readers, then call the first before calling the second.
 
-Let's look at how to use the CopyBookReaders. 
+Let's look at how to use the CopyBookReaders. We'll start by implementing a fold left function on a file.
 {% highlight scala %}
   def foldLeft[Acc, X: CopyBookReader](file: String)(initial: Acc)(
                                        foldFn: (Acc, X) => Acc): Acc = {
