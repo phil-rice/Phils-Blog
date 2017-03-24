@@ -13,6 +13,9 @@ The performance of this reading is not very important, and I am going to have a 
 
 [The code for this can be found here](https://github.com/phil-rice/CobolCopyBookReader)
 
+My approach was to first of all look at what open source libraries already existed, then I looked at a similar library (turns strings into scala objects) before moving on to writing my own version
+
+
 ## What's gone before
 I was surprised to find very little in the way of conversion projects, other than commercial offerings. The ones that existed didn't seem to be maintained. The ones I looked
 at and considered using where JRecord and CB2Java. A little playing with them, and I came to the conclusion that working out what was going on was going to be hard. I had actually
@@ -62,7 +65,7 @@ case class StationDetails(stnLoc: Location, acode: String, name: String,
         minInterchange: Time, maxInterchange: Time)
 {% endhighlight %}
 
-# Play Framework's JSON parser
+## Similar library: Play Framework's JSON parser
 This is a lovely piece of software engineering. If we were to use the same style of code we would end up with something like the following. Actually
 I think it would be a little nicer, as they would manage to finesse the 'map' code away, but I'll look at how to do that in the future.
 
@@ -86,12 +89,12 @@ What we see in this code is the stationDetailsReader is using other readers to g
 locReader produces things of type Location, the colorReader things of type Colour and so on. It is the goal of this piece of work: to make something like that. I would argue 
 it isn't (quite) as readable as the annotations, but the flexibility and ability to calculate intermediate values, enrich values and make things type safe is well worth it.
 
-# How does Play do this?
+## How does Play do this?
 The answer is by heavy use of implicits and type classes. The most important trait is the `FunctionalCanBuild[M[_]]` trait. I have to admit to having spent a number of hours 
 scratching my head and working on code before I "got it".  Let's look at how we can use it. The answer is 'really easily'. I have to tell the framework how to compose objects
 together, and that's about it.
 
-# The simple CopyBookReaders
+## The simple CopyBookReaders
 Firstly we need a thing that is going to be the basic building block we are going to build. For the moment we don't need to worry what the CopyBookStream is, other than the fact that a CopyBookReader[X] will 
 take one and produce a result of type X. In bad old mutable programming style the stream is in fact a mutable stream... But we will ignore that too! The methods on this are
 unimportant for the framework until we come to the one place where we worry about how to wire things together.
@@ -156,7 +159,7 @@ case class CompCopyBookReader[X](compLength: Int)
 }
 {% endhighlight %}
 
-# Composing the CopyBookReaders
+## Composing the CopyBookReaders
 Now that I have my building blocks, I have to tell the Functional building framework how to build it. This will let us use the lovely 'and' notation
 that we saw in our earlier code samples.
 
@@ -208,7 +211,7 @@ def main(args: Array[String]): Unit = {
 }
 {% endhighlight %}
 
-#The FunctorCopyBookReader
+# The FunctorCopyBookReader
 This is how a Int is turned into Location, or a String into a Colour. This turned out to be very straightforwards:
 
 {% highlight scala %}
@@ -227,9 +230,10 @@ object CopyBookReader {
 }
 {% endhighlight %}
 
-# The CopyBookStream
+## The CopyBookStream
 This is quite horrific with the use of flags and immutable state. The coupling between it and the foldLeft function is distasteful too.  I would be interested if 
-anyone has a better way of doing this sort of thing.
+anyone has a better way of doing this sort of thing. It is though the only use of mutable state, and when interacting with the real world that's needed
+
 {% highlight scala %}
 class CopyBookStream(inputStream: InputStream) {
   // The problem these flags are solving is 'how do I know I am at the end of file' 
