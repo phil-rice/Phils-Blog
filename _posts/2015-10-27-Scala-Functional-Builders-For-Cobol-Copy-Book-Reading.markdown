@@ -86,12 +86,12 @@ What we see in this code is the stationDetailsReader is using other readers to g
 locReader produces things of type Location, the colorReader things of type Colour and so on. It is the goal of this piece of work: to make something like that. I would argue 
 it isn't (quite) as readable as the annotations, but the flexibility and ability to calculate intermediate values, enrich values and make things type safe is well worth it.
 
-#How does Play do this?
+# How does Play do this?
 The answer is by heavy use of implicits and type classes. The most important trait is the FunctionalCanBuild[M[_]] trait. I have to admit to having spent a number of hours 
 scratching my head and working on code before I "got it".  Let's look at how we can use it. The answer is 'really easily'. I have to tell the framework how to compose objects
 together, and that's about it.
 
-#The simple CopyBookReaders
+# The simple CopyBookReaders
 Firstly we need a thing that is going to be the basic building block we are going to build. For the moment we don't need to worry what the CopyBookStream is, other than the fact that a CopyBookReader[X] will 
 take one and produce a result of type X. In bad old mutable programming style the stream is in fact a mutable stream... But we will ignore that too! The methods on this are
 unimportant for the framework until we come to the one place where we worry about how to wire things together.
