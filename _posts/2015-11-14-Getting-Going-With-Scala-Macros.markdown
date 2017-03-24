@@ -16,7 +16,7 @@ and then took a look at the new approach while [heavily depends on Quasiquotes](
 
 [The code for this can be found here](https://github.com/phil-rice/ScalaMacroBlog)
 
-#Scala string interpolation
+# Scala string interpolation
 
 Before we go into quasi quotes it helps if [we understand string interpolation](http://docs.scala-lang.org/overviews/core/string-interpolation.html). I have used similar things in ruby in the past and have
 missed them in Scala and Java. Scala 2.10 introduced them, which made me a lot happier. Let's compare the following two printlns
@@ -35,7 +35,7 @@ The $a in the string prefixed with an s means 'put the toString of the variable 
 
 These are very useful, and I use them a lot. Quasiquotes are an extension of the same code base
 
-#Quasiquotes
+# Quasiquotes
 
 I started by following the [guide]( http://docs.scala-lang.org/overviews/quasiquotes/intro.html)
 {% highlight scala %} 
@@ -71,7 +71,7 @@ i.am(a.quasiquote)
 What this is, is a pretty printed abstract syntax tree of the code i.am(a.quasiquote). 'i' represents some variable or method or object called i. Similarly with 'a'. The words 'am' and 'quasiquote' are method calls.
 Of course none of these things exist. There are no variables called 'i' and 'a', and they certainly don't have these methods! 
 
-#What is an Abstract Syntax Tree (AST)?
+# What is an Abstract Syntax Tree (AST)?
 These words are used a lot in the documentation. In essence they are the domain model for code. If you have a line of code 'if(a) b else c' then this would be modeled as a tree with an if statement
 at the top. That if statement would have a condition, a then and an optional else. The condition in this case is an identifier with the value of the string 'a'. A good summary (as every) 
 [is on wikipedia](https://en.wikipedia.org/wiki/Abstract_syntax_tree) 
@@ -80,7 +80,7 @@ One way of thinking of code is as 'a way of describing an abstract syntax tree s
 The macro 'executes' during compile time, and returns a (suitably typed)  AST that is spliced into the rest of the compiled code. One really nice thing about it (perhaps the most useful singlet thing) is
 that the parameter to it are NOT evaluated and passed in. Instead the AST that represents them is passed in. A use for this can be seen in the FunctionalWrapper example below  
 
-#Hello World Macro
+# Hello World Macro
 {% highlight scala %} 
 import language.experimental.macros
 import reflect.macros.Context
@@ -115,7 +115,7 @@ so we change the code to import reflect.macros.blackbox.Context.
 
 We still have a compilation issue: Macros can't be executed in the  same compilation unit that defines them
 
-#Splitting the project into two projects
+# Splitting the project into two projects
 
 SBT allows multiple projects in the same build unit. While I was doing the plumbing for that, I sorted out the 'scala version number' so that I only have to define it in one place. build.sbt is now
 {% highlight scala%} 
@@ -184,7 +184,7 @@ object HelloWorldOldMacroUser {
 {% endhighlight %}
 We run HelloWorldOldMacroUser and voila! We get Hello printed on the console
 
-#What's wrong with the old macros? 
+# What's wrong with the old macros? 
 
 Well here is an example from something I've done before
 {% highlight scala%}
@@ -208,7 +208,7 @@ And... what is going on? There is so much code in that reify! Even worse it took
 and work out some unpleasant compiler details. And... it's quite verbose! There are also horrible and complicated issues with types that are 'unnecessary complixity'. The new approach
 using quasiquotes seems to remove a lot of that pain
 
-#Hello World with Quasiquotes
+# Hello World with Quasiquotes
 In the macroDefn project we have
 {% highlight scala%}
 import scala.reflect.macros.blackbox.Context
@@ -238,7 +238,7 @@ object QuasiQuotesUser {
 {% endhighlight %}
 If we run the QuasiQuotesUser main method 'Hello' is printed to the console
 
-#What's going on
+# What's going on
 
 Let's break the code down a little. We start with the place where we declare 'there is a macro called hello'.
 
@@ -264,7 +264,7 @@ Once we have the declaration sorted, we need to provide all the plumbing to allo
 
 The quasiquotes then allow us to make an abstract syntax tree representing the code we want to replace the macro call, and c.Expr turns that AST into the result type expected by the macro
 
-#Nice function toString with Macros
+# Nice function toString with Macros
 
 The reason I turned to macros was that I want to have pretty toStrings for my closures. Which is nicer? 
 
@@ -322,7 +322,7 @@ Here we see how to specifiy generics. In the 'apply' we have P as the parameter 
 magic that does that. Again we need to "import c.universe._" to ensure that the quasiquotes are in the correct context. The quasiquotes make a new FunctionWrapper passing the fn into it. As well as the fn
 they pass in a string that is the 'tostring' of the fn. The code 'show(fn.tree)' turns fn's AST into a pretty string.
 
-#Summary
+# Summary
 
 Macro's are a useful tool. They are a way to do things that you can't otherwise do in a language. I don't know anyother every half reliable way of getting the toString of a function to be realibly
 made from it's abstract syntax tree. I hope this example showed that useful macros don't have to be horribly complicated to write. I use the FunctionalWrapper
