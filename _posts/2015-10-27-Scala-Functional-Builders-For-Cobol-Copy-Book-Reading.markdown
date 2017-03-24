@@ -87,7 +87,7 @@ locReader produces things of type Location, the colorReader things of type Colou
 it isn't (quite) as readable as the annotations, but the flexibility and ability to calculate intermediate values, enrich values and make things type safe is well worth it.
 
 # How does Play do this?
-The answer is by heavy use of implicits and type classes. The most important trait is the FunctionalCanBuild[M[_]] trait. I have to admit to having spent a number of hours 
+The answer is by heavy use of implicits and type classes. The most important trait is the `FunctionalCanBuild[M[_]]` trait. I have to admit to having spent a number of hours 
 scratching my head and working on code before I "got it".  Let's look at how we can use it. The answer is 'really easily'. I have to tell the framework how to compose objects
 together, and that's about it.
 
