@@ -7,13 +7,13 @@ categories:
 - scala
 - legacy
 ---
-#Overview
+# Overview
 I have to read some data from a mainframe system. The files are defined using ['cobol copy books'](http://www.tutorialspoint.com/cobol/cobol_data_layout.htm) 
 The performance of this reading is not very important, and I am going to have a number of different files to read
 
 [The code for this can be found here](https://github.com/phil-rice/CobolCopyBookReader)
 
-##What's gone before
+## What's gone before
 I was surprised to find very little in the way of conversion projects, other than commercial offerings. The ones that existed didn't seem to be maintained. The ones I looked
 at and considered using where JRecord and CB2Java. A little playing with them, and I came to the conclusion that working out what was going on was going to be hard. I had actually
 written a Cobol Copy Book to Java class converter in the past, and knew that I needed to only do a small part of the work for these specific files.
@@ -62,7 +62,7 @@ case class StationDetails(stnLoc: Location, acode: String, name: String,
         minInterchange: Time, maxInterchange: Time)
 {% endhighlight %}
 
-#Play Framework's JSON parser
+# Play Framework's JSON parser
 This is a lovely piece of software engineering. If we were to use the same style of code we would end up with something like the following. Actually
 I think it would be a little nicer, as they would manage to finesse the 'map' code away, but I'll look at how to do that in the future.
 
@@ -156,7 +156,7 @@ case class CompCopyBookReader[X](compLength: Int)
 }
 {% endhighlight %}
 
-#Composing the CopyBookReaders
+# Composing the CopyBookReaders
 Now that I have my building blocks, I have to tell the Functional building framework how to build it. This will let us use the lovely 'and' notation
 that we saw in our earlier code samples.
 
@@ -227,7 +227,7 @@ object CopyBookReader {
 }
 {% endhighlight %}
 
-#The CopyBookStream
+# The CopyBookStream
 This is quite horrific with the use of flags and immutable state. The coupling between it and the foldLeft function is distasteful too.  I would be interested if 
 anyone has a better way of doing this sort of thing.
 {% highlight scala %}
@@ -248,7 +248,7 @@ class CopyBookStream(inputStream: InputStream) {
 }
 {% endhighlight %}
 
-#Summary
+# Summary
 I expected it to be very hard to do this work, and in the end (to be fair after hours of head scratching) it turned out to be the following
 
 * Define the trait CopyBookReader
