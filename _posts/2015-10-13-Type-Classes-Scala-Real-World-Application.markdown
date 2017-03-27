@@ -8,7 +8,7 @@ categories:
 - performance
 ---
 
-#Overview
+# Overview
 I am engaged in a legacy modernisation task on a job that is working out the possible routes that people might of traveled on. 
 The modernisation project will take many tens of man years of developer time, and because there are significant sums of money 
 involved in the results, the results of the modernised system have to be able to exactly duplicate the behaviour of the legacy.
@@ -192,7 +192,7 @@ object Matrix {
 }
 {% endhighlight %}
 
-#Calculating the mileage.
+# Calculating the mileage.
 The [Floyd Warshell algorithm](https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm) is simple to use and understand and does exactly what is needed. I did have to edit the wiki page (a very scary moment) as there was an error on it involved a
  ‘<’ sign.  
  
@@ -313,14 +313,14 @@ Because of the ease of adding new Matrix types, I actually have a quite a few ot
 short[] and int[]. It is worth noting that they are only just faster than Array[Array[Int]] in the time to access the data
 
 
-#Expected Results 
+# Expected Results 
 
 ## Java native code is much faster
 Some of the Matrix like classes I created were native Java using short[] and int[]. They were just faster than using Scala values. I rewrote the MatrixFactory in 
 Java, and that was perhaps an order of magnitude faster. The speed up is (I think) because in native Java there were no virtual method calls
 so the Just In Yime compiler could in-line everything. Passing closures, or functions, into the heart of loops that are to run fast may not work for high performance code!
 
-##The bigger the Matrix the slower the access times
+## The bigger the Matrix the slower the access times
 Once again this is because of the cost of the cache. If the matrix is small then it fits into the cache (there are levels of cache). As the matrix gets bigger it gets slower to access it as 
 (because of the random nature of access) the time to get the data into the cache dominates everything. A good example of this can be seen looking at the 'Using' column for 'ShortArrayAndLength'. 
 This varies in time from one second to ten seconds.
@@ -369,7 +369,7 @@ for (int k = 0; k < vertexCount(); k++)
 }
 {% endhighlight %}
 
-#Surprise Results
+# Surprise Results
 
 ## Shorts were worse than Ints
 Look at the time difference between the Java memory structures using short[] and those using Array[Short]. I have no idea why at the moment, other than to suspect
@@ -396,6 +396,6 @@ The whole Batch job started at about 300 seconds single threaded. Doing this pro
 That is a much better saving that the above figures would indicate, and I think that is because of the non random nature of the access queries. The other difference was moving to multiple cores. With
 eight cores the 300 seconds still took 200 seconds, whereas with the new structure it took about 120s. My understanding of these results is that Garbage Collection is a big overhead, and gets bigger the more cores that are used.
 
-#Benefit of the Type Classes
+# Benefit of the Type Classes
 Without doubt because of the ease of adding new data representations I evaluated many more Matrix types than I would of otherwise. I could say 'I wonder what this would do' and just add another one. I
 personally gained a much better idea of how the data structure and access methods affected execution times.
