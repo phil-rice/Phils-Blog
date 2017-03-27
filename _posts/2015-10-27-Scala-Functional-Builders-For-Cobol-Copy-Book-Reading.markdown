@@ -18,7 +18,7 @@ My approach was to first of all look at what open source libraries already exist
 
 ## What's gone before
 I was surprised to find very little in the way of conversion projects, other than commercial offerings. The ones that existed didn't seem to be maintained. The ones I looked
-at and considered using where JRecord and CB2Java. A little playing with them, and I came to the conclusion that working out what was going on was going to be hard. I had actually
+at and considered using were JRecord and CB2Java. A little playing with them, and I came to the conclusion that working out what was going on was going to be hard. I had actually
 written a Cobol Copy Book to Java class converter in the past, and knew that I needed to only do a small part of the work for these specific files.
 
 What I wanted to do was to take the opportunity to learn how to use the same style of programming that Scala Play gives us with the JSON library. Here is the raw copy book description
