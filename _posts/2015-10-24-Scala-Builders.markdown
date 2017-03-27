@@ -40,7 +40,7 @@ I want to be able to do the very nice Scala operations such as map, fold and so 
 the same worry about performance (testing, reporting, diagnostics) I don't have the same paranoid worries about performance, and instead revert to my normal values of 
 clarity and ease of writing.
 
-The AnyVal I will be using to wrap the long in is below. The details don't really matters, although as you can see it uses the long to represent a 'from' and a 'to'. All we need worry about is that it has a 'toString' so we will be able to see if our
+The AnyVal I will be using to wrap the long in is below. The details don't really matters, although as you can see it uses the long to represent a 'from' and a 'to' and the 'from' and 'to' represent a value and a size. All we need worry about is that it has a 'toString' so we will be able to see if our
 methods are working.
 {% highlight scala %} 
 class OttAsLong(val ott: Long) extends AnyVal {
