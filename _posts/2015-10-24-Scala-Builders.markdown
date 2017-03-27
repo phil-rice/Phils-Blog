@@ -54,7 +54,7 @@ class ValueAndSize(val int: Int) extends AnyVal {
   override def toString = s"($value/$size)"
 }
 {% endhighlight %}
-#Iterators
+# Iterators
 Let's start off with the easy stuff. Before we can do map and fold, let's do 'find', 'for each' and so on. For those all that is needed is
 {% highlight scala %} 
 object ScalaBuildersBlog {
@@ -88,7 +88,7 @@ OttAsLong((0/0) <== (0/3)))
 What's happening here is that the implicit asIterator is being used to turn the LongArrayAndLength into an Iterator[OttAsLong]. As the Iterator has the method 'toList' on it, it is being
 used in the println.
 
-#Map and Fold
+# Map and Fold
 Well iterating is all very well, but I want to be able to map, fold, flatMap. sort, filter, groupBy and ... and lots of things. All the nice operators that would allow me to use this as a 
 first class data structure in Scala. The main question I need to answer to do this is 'what do I have to implement to make this magic happen'. Let's start with a look at the signature of 'map' in Traversable
 {% highlight scala %} 
@@ -140,7 +140,7 @@ Now we can do the following
   }
 {% endhighlight %}
 
-#Summary
+# Summary
 It was remarkably easy to give my own data structure the goodness of the Scala collections framework. I had to do the following
 * implement a 'asIterator'
 * implement a 'Builder'
