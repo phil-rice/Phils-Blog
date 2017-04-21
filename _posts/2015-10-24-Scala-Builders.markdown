@@ -9,7 +9,9 @@ categories:
 
 I am currently in the unhappy position of having to use a Java data structure to hold my data. The data structure  will be accessed several billion times in under two minutes, and `long[]` is  sufficiently quicker than `Array[Long]`, that the pain is worth it. The longs in the `long[]` are actually going to be an AnyVal class OttAsLong.
 
-This is quite a common pattern for high performance code. The performance of most high speed algorithms is dominated by cache usage. This approach is giving me type safety for no run time cost, and allows the code that doesn't need to be performant (almost all of it) fully type safe access to the data
+This is quite a common pattern for high performance code. The performance of most high speed algorithms is dominated by cache usage. By compressing the
+data I wish to manipulate I can get a dramatic speed up. I've had multiple order of magnitude improvements by moving to this pattern. This approach is giving me
+type safety for no run time cost, and allows the code that doesn't need to be performant (almost all of it) fully type safe access to the data.
 
 [The code for this can be found here](https://github.com/phil-rice/ScalaBuildersBlog)
 
