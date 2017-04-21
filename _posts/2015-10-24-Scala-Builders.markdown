@@ -7,7 +7,7 @@ categories:
 - scala
 ---
 
-I am currently in the unhappy position of having to use a Java data structure to hold my data. The data structure  will be accessed several billion times in under two minutes, and long[] is  sufficiently quicker than Array[Long], that the pain is worth it. The longs in the long[] are actually going to be an AnyVal class OttAsLong.
+I am currently in the unhappy position of having to use a Java data structure to hold my data. The data structure  will be accessed several billion times in under two minutes, and `long[]` is  sufficiently quicker than `Array[Long]`, that the pain is worth it. The longs in the `long[]` are actually going to be an AnyVal class OttAsLong.
 
 This is quite a common pattern for high performance code. The performance of most high speed algorithms is dominated by cache usage. This approach is giving me type safety for no run time cost, and allows the code that doesn't need to be performant (almost all of it) fully type safe access to the data
 
@@ -41,7 +41,7 @@ I want to be able to do the very nice Scala operations such as map, fold and so 
 the same worry about performance (testing, reporting, diagnostics) I don't have the same paranoid worries about performance, and instead revert to the usual values of
 clarity and ease of writing.
 
-The AnyVal I will be using to wrap the long in is below. The details don't really matters, although as you can see it uses the long to represent a 'from' and a 'to' and the 'from' and 'to' represent a value and a size. All we need worry about is that it has a 'toString' so we will be able to see if our
+The `AnyVal` I will be using to wrap the long in is below. The details don't really matters, although as you can see it uses the long to represent a 'from' and a 'to' and the 'from' and 'to' represent a value and a size. All we need worry about is that it has a 'toString' so we will be able to see if our
 methods are working.
 {% highlight scala %} 
 class OttAsLong(val ott: Long) extends AnyVal {
@@ -86,12 +86,12 @@ OttAsLong((0/0) <== (0/1))
 OttAsLong((0/0) <== (0/2))
 OttAsLong((0/0) <== (0/3)))
 {% endhighlight %}
-Let's just recap what is happening here. LongArrayAndLength is a Java class. It doesn't have a `foreach` method. The implicit `asIterator` method is in scope and allows Scala to turn the
-Java class into an iterator. A second implicit is in scope which allows the `foreach` method to be used on iterators.
+Let's just recap what is happening here. `LongArrayAndLength` is a Java class. It doesn't have a `foreach` method. The implicit `asIterator` method is in scope and allows Scala to turn the
+Java class into an `iterator`. A second implicit is in scope which allows the `foreach` method to be used on iterators.
 
 # Map and Fold
 Well iterating is all very well, but I want to be able to map, fold, flatMap. sort, filter, groupBy and ... and lots of things. All the nice operators that would allow me to use this as a 
-first class data structure in Scala. The main question I need to answer to do this is *what do I have to implement to make this magic happen*. Let's start with a look at the signature of 'map' in Traversable
+first class data structure in Scala. The main question I need to answer to do this is *what do I have to implement to make this magic happen*. Let's start with a look at the signature of `map` in `Traversable`
 {% highlight scala %} 
   override def map[B, That](f: A => B)(
                    implicit bf: CanBuildFrom[Traversable[A], B, That]): That
@@ -143,9 +143,9 @@ Now we can do the following
 
 # Summary
 It was remarkably easy to give my own data structure the goodness of the Scala collections framework. I had to do the following
-* implement a 'asIterator'
-* implement a 'Builder'
-* implement a 'CanBuildFrom'
+* implement a `asIterator`
+* implement a `Builder`
+* implement a `CanBuildFrom`
 None of which took more than a few minutes to do. 
 
 It's worth realising that we can do this to our Scala classes as well. If the Java class had been a Scala class, I could of implemented these in the companion object
