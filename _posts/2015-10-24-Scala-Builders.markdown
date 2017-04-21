@@ -38,7 +38,7 @@ public class LongArrayAndLength {
 {% endhighlight %}
 
 I want to be able to do the very nice Scala operations such as map, fold and so on on this object. As the only time I will be doing this will be times when I don't have
-the same worry about performance (testing, reporting, diagnostics) I don't have the same paranoid worries about performance, and instead revert to my normal values of 
+the same worry about performance (testing, reporting, diagnostics) I don't have the same paranoid worries about performance, and instead revert to the usual values of
 clarity and ease of writing.
 
 The AnyVal I will be using to wrap the long in is below. The details don't really matters, although as you can see it uses the long to represent a 'from' and a 'to' and the 'from' and 'to' represent a value and a size. All we need worry about is that it has a 'toString' so we will be able to see if our
@@ -70,7 +70,7 @@ object ScalaBuildersBlog {
   }
 }
 {% endhighlight %}
-We can try out this new code
+We can try out this new code.
 {% highlight scala %} 
   def main(args: Array[String]): Unit = {
     val l = new LongArrayAndLength(100)
@@ -80,30 +80,30 @@ We can try out this new code
     l.foreach(println(_))
   }
 {% endhighlight %}
-And to our happiness we get the results  
+And to our happiness we get the results (the only interesting part is the /1, /2, /3 which correspond to 1, 2 and 3)
 {% highlight scala %} 
 OttAsLong((0/0) <== (0/1))
 OttAsLong((0/0) <== (0/2))
 OttAsLong((0/0) <== (0/3)))
 {% endhighlight %}
-What's happening here is that the implicit asIterator is being used to turn the LongArrayAndLength into an Iterator[OttAsLong]. As the Iterator has the method 'toList' on it, it is being
-used in the println.
+Let's just recap what is happening here. LongArrayAndLength is a Java class. It doesn't have a `foreach` method. The implicit `asIterator` method is in scope and allows Scala to turn the
+Java class into an iterator. A second implicit is in scope which allows the `foreach` method to be used on iterators.
 
 # Map and Fold
 Well iterating is all very well, but I want to be able to map, fold, flatMap. sort, filter, groupBy and ... and lots of things. All the nice operators that would allow me to use this as a 
-first class data structure in Scala. The main question I need to answer to do this is 'what do I have to implement to make this magic happen'. Let's start with a look at the signature of 'map' in Traversable
+first class data structure in Scala. The main question I need to answer to do this is *what do I have to implement to make this magic happen*. Let's start with a look at the signature of 'map' in Traversable
 {% highlight scala %} 
   override def map[B, That](f: A => B)(
                    implicit bf: CanBuildFrom[Traversable[A], B, That]): That
 {% endhighlight %}
-Well that's pretty straightforwards. We can see what we need to do. We need to implement CanBuildFrom[LongArrayAndLength, B, LongArrayAndLength]. Let's look at the signature
+Well that's pretty straightforwards. We can see what we need to do: we need to implement `CanBuildFrom[LongArrayAndLength, B, LongArrayAndLength]`. Let's look at the signature
 {% highlight scala %} 
 trait CanBuildFrom[-From, -Elem, +To] {
   def apply(from: From): Builder[Elem, To]
   def apply(): Builder[Elem, To]
 }
 {% endhighlight %}
-And now we are starting down the rabbit hole. CanBuilderFrom immediately pushes us to look at Builder. How far does this rabbit hole go? The answer is not very far
+And now we are starting down the rabbit hole! `CanBuilderFrom` immediately pushes us to look at `Builder`. How far does this rabbit hole go? The answer is not very far
 {% highlight scala %} 
 trait Builder[-Elem, +To] extends Growable[Elem] {
   def +=(elem: Elem): this.type
@@ -113,7 +113,7 @@ trait Builder[-Elem, +To] extends Growable[Elem] {
  }
 {% endhighlight %}
 
-Both CanBuilderFrom and Builder look pretty straightforwards, especially if I am not worried about performance
+Both `CanBuilderFrom` and `Builder` look pretty straightforwards, especially if I am not worried about performance
 {% highlight scala %} 
   implicit object LongArrayAndLengthCanBuildFrom extends 
         CanBuildFrom[LongArrayAndLength, OttAsLong, LongArrayAndLength] {
@@ -148,7 +148,9 @@ It was remarkably easy to give my own data structure the goodness of the Scala c
 * implement a 'CanBuildFrom'
 None of which took more than a few minutes to do. 
 
-If the Java class had been a Scala class, I could of implemented these in the companion object which would of meant I didn't need to do some import magic to use this,
-however as it's a Java class we need to make a dedicated object.
+It's worth realising that we can do this to our Scala classes as well. If the Java class had been a Scala class, I could of implemented these in the companion object
+which would of meant I didn't need to do some import magic to use this, however as it's a Java class we need to make a dedicated object.
+
+
 
 
